@@ -2,6 +2,7 @@ resource_registry:
 
   OS::TripleO::SoftwareDeployment: OS::Heat::StructuredDeployment
   OS::TripleO::PostDeploySteps: puppet/post.yaml
+  OS::TripleO::PostUpgradeSteps: puppet/post-upgrade.yaml
   OS::TripleO::AllNodes::SoftwareConfig: puppet/all-nodes-config.yaml
   OS::TripleO::Hosts::SoftwareConfig: hosts-config.yaml
   OS::TripleO::Ssh::HostPubKey: extraconfig/tasks/ssh/host_public_key.yaml
@@ -12,10 +13,8 @@ resource_registry:
   OS::TripleO::Tasks::UpdateWorkflow: OS::Heat::None
   OS::TripleO::Tasks::PackageUpdate: extraconfig/tasks/yum_update.yaml
 
-  OS::TripleO::Tasks::SwiftRingDeploy: extraconfig/tasks/swift-ring-deploy.yaml
-  OS::TripleO::Tasks::SwiftRingUpdate: extraconfig/tasks/swift-ring-update.yaml
-
 {% for role in roles %}
+  OS::TripleO::{{role.name}}::PreNetworkConfig: OS::Heat::None
   OS::TripleO::{{role.name}}PostDeploySteps: puppet/post.yaml
   OS::TripleO::{{role.name}}: puppet/{{role.name.lower()}}-role.yaml
   OS::TripleO::{{role.name}}Config: puppet/{{role.name.lower()}}-config.yaml
@@ -23,22 +22,16 @@ resource_registry:
   OS::TripleO::Tasks::{{role.name}}PostConfig: OS::Heat::None
   OS::TripleO::{{role.name}}ExtraConfigPre: puppet/extraconfig/pre_deploy/default.yaml
   # Port assignments for the {{role.name}} role
+  {%- if role.name != 'ObjectStorage' %}
+    {%- for network in networks %}
+  OS::TripleO::{{role.name}}::Ports::{{network.name}}Port: network/ports/noop.yaml
+    {%- endfor %}
+  {%- else %}
   # Note we have to special-case ObjectStorage for backwards compatibility
-  {% if role.name != 'ObjectStorage' %}
-  OS::TripleO::{{role.name}}::Ports::ExternalPort: network/ports/noop.yaml
-  OS::TripleO::{{role.name}}::Ports::InternalApiPort: network/ports/noop.yaml
-  OS::TripleO::{{role.name}}::Ports::StoragePort: network/ports/noop.yaml
-  OS::TripleO::{{role.name}}::Ports::StorageMgmtPort: network/ports/noop.yaml
-  OS::TripleO::{{role.name}}::Ports::TenantPort: network/ports/noop.yaml
-  OS::TripleO::{{role.name}}::Ports::ManagementPort: network/ports/noop.yaml
-  {% else %}
-  OS::TripleO::SwiftStorage::Ports::ExternalPort: network/ports/noop.yaml
-  OS::TripleO::SwiftStorage::Ports::InternalApiPort: network/ports/noop.yaml
-  OS::TripleO::SwiftStorage::Ports::StoragePort: network/ports/noop.yaml
-  OS::TripleO::SwiftStorage::Ports::StorageMgmtPort: network/ports/noop.yaml
-  OS::TripleO::SwiftStorage::Ports::TenantPort: network/ports/noop.yaml
-  OS::TripleO::SwiftStorage::Ports::ManagementPort: network/ports/noop.yaml
-  {% endif %}
+    {%- for network in networks %}
+  OS::TripleO::SwiftStorage::Ports::{{network.name}}Port: network/ports/noop.yaml
+    {%- endfor %}
+  {%- endif %}
   OS::TripleO::{{role.name}}::Net::SoftwareConfig: net-config-noop.yaml
 {% endfor %}
 
@@ -46,7 +39,12 @@ resource_registry:
   # in the jinja loop
   OS::TripleO::Controller::Net::SoftwareConfig: net-config-bridge.yaml
 
+  OS::TripleO::ServiceServerMetadataHook: OS::Heat::None
+
   OS::TripleO::Server: OS::Nova::Server
+{% for role in roles %}
+  OS::TripleO::{{role.name}}Server: OS::TripleO::Server
+{% endfor %}
 
   # This creates the "heat-admin" user for all OS images by default
   # To disable, replace with firstboot/userdata_default.yaml
@@ -54,17 +52,18 @@ resource_registry:
 
   # Hooks for operator extra config
   # NodeUserData == Cloud-init additional user-data, e.g cloud-config
+  # role::NodeUserData == Role specific cloud-init additional user-data
   # ControllerExtraConfigPre == Controller configuration pre service deployment
   # NodeExtraConfig == All nodes configuration pre service deployment
   # NodeExtraConfigPost == All nodes configuration post service deployment
   OS::TripleO::NodeUserData: firstboot/userdata_default.yaml
+{% for role in roles %}
+  OS::TripleO::{{role.name}}::NodeUserData: firstboot/userdata_default.yaml
+{% endfor %}
   OS::TripleO::NodeTLSCAData: OS::Heat::None
   OS::TripleO::NodeTLSData: OS::Heat::None
   OS::TripleO::NodeExtraConfig: puppet/extraconfig/pre_deploy/default.yaml
   OS::TripleO::NodeExtraConfigPost: extraconfig/post_deploy/default.yaml
-
-  OS::TripleO::Tasks::ControllerPrePuppet: OS::Heat::None
-  OS::TripleO::Tasks::ControllerPostPuppet: OS::Heat::None
 
   # "AllNodes" Extra cluster config, runs on all nodes prior to the post_deploy
   # phase, e.g when puppet is applied, but after the pre_deploy phase.  Useful when
@@ -76,12 +75,9 @@ resource_registry:
   # TripleO overcloud networks
   OS::TripleO::Network: network/networks.yaml
 
-  OS::TripleO::Network::External: OS::Heat::None
-  OS::TripleO::Network::InternalApi: OS::Heat::None
-  OS::TripleO::Network::StorageMgmt: OS::Heat::None
-  OS::TripleO::Network::Storage: OS::Heat::None
-  OS::TripleO::Network::Tenant: OS::Heat::None
-  OS::TripleO::Network::Management: OS::Heat::None
+  {%- for network in networks %}
+  OS::TripleO::Network::{{network.name}}: OS::Heat::None
+  {%- endfor %}
 
   OS::TripleO::Network::ExtraConfig: OS::Heat::None
 
@@ -90,11 +86,12 @@ resource_registry:
   OS::TripleO::Network::Ports::NetIpListMap: network/ports/net_ip_list_map.yaml
 
   # Port assignments for the VIPs
-  OS::TripleO::Network::Ports::ExternalVipPort: network/ports/noop.yaml
-  OS::TripleO::Network::Ports::InternalApiVipPort: network/ports/noop.yaml
-  OS::TripleO::Network::Ports::StorageVipPort: network/ports/noop.yaml
-  OS::TripleO::Network::Ports::StorageMgmtVipPort: network/ports/noop.yaml
+  {%- for network in networks if network.vip|default(false) %}
+  OS::TripleO::Network::Ports::{{network.name}}VipPort: network/ports/noop.yaml
+  {%- endfor %}
+
   OS::TripleO::Network::Ports::RedisVipPort: network/ports/ctlplane_vip.yaml
+  OS::TripleO::Network::Ports::ControlPlaneVipPort: OS::Neutron::Port
 
   # Service to network Mappings
   OS::TripleO::ServiceNetMap: network/service_net_map.yaml
@@ -105,11 +102,16 @@ resource_registry:
   # validation resources
   OS::TripleO::AllNodes::Validation: all-nodes-validation.yaml
 
+  # Upgrade resources
+  OS::TripleO::UpgradeConfig: puppet/upgrade_config.yaml
+
   # services
-  OS::TripleO::Services: puppet/services/services.yaml
+  OS::TripleO::Services: services.yaml
   OS::TripleO::Services::Apache: puppet/services/apache.yaml
   OS::TripleO::Services::CACerts: puppet/services/ca-certs.yaml
+  OS::TripleO::Services::CephMds: OS::Heat::None
   OS::TripleO::Services::CephMon: OS::Heat::None
+  OS::TripleO::Services::CephRbdMirror: OS::Heat::None
   OS::TripleO::Services::CephRgw: OS::Heat::None
   OS::TripleO::Services::CephOSD: OS::Heat::None
   OS::TripleO::Services::CephClient: OS::Heat::None
@@ -119,18 +121,21 @@ resource_registry:
   OS::TripleO::Services::CinderScheduler: puppet/services/cinder-scheduler.yaml
   OS::TripleO::Services::CinderVolume: puppet/services/cinder-volume.yaml
   OS::TripleO::Services::BlockStorageCinderVolume: puppet/services/cinder-volume.yaml
-  OS::TripleO::Services::Core: OS::Heat::None
+  OS::TripleO::Services::Congress: OS::Heat::None
   OS::TripleO::Services::Keystone: puppet/services/keystone.yaml
   OS::TripleO::Services::GlanceApi: puppet/services/glance-api.yaml
-  OS::TripleO::Services::GlanceRegistry: puppet/services/glance-registry.yaml
+  OS::TripleO::Services::GlanceRegistry: puppet/services/disabled/glance-registry-disabled.yaml
   OS::TripleO::Services::HeatApi: puppet/services/heat-api.yaml
   OS::TripleO::Services::HeatApiCfn: puppet/services/heat-api-cfn.yaml
   OS::TripleO::Services::HeatApiCloudwatch: puppet/services/heat-api-cloudwatch.yaml
   OS::TripleO::Services::HeatEngine: puppet/services/heat-engine.yaml
   OS::TripleO::Services::Kernel: puppet/services/kernel.yaml
   OS::TripleO::Services::MySQL: puppet/services/database/mysql.yaml
+  OS::TripleO::Services::NeutronBgpVpnApi: OS::Heat::None
   OS::TripleO::Services::NeutronDhcpAgent: puppet/services/neutron-dhcp.yaml
+  OS::TripleO::Services::NeutronL2gwApi: OS::Heat::None
   OS::TripleO::Services::NeutronL3Agent: puppet/services/neutron-l3.yaml
+  OS::TripleO::Services::NeutronL2gwAgent: OS::Heat::None
   OS::TripleO::Services::NeutronMetadataAgent: puppet/services/neutron-metadata.yaml
   # FIXME(shardy) the duplicate NeutronServer line can be removed when we've updated
   # the multinode job ControllerServices after this patch merges
@@ -144,22 +149,33 @@ resource_registry:
   OS::TripleO::Services::NeutronCorePluginML2OVN: puppet/services/neutron-plugin-ml2-ovn.yaml
   OS::TripleO::Services::NeutronCorePluginPlumgrid: puppet/services/neutron-plugin-plumgrid.yaml
   OS::TripleO::Services::NeutronCorePluginNuage: puppet/services/neutron-plugin-nuage.yaml
-  OS::TripleO::Services::NeutronCorePluginOpencontrail: puppet/services/neutron-plugin-opencontrail.yaml
+  OS::TripleO::Services::NeutronCorePluginNSX: puppet/services/neutron-plugin-nsx.yaml
+  OS::TripleO::Services::NeutronCorePluginVTS: puppet/services/neutron-plugin-cisco-vts.yaml
+  OS::TripleO::Services::OVNDBs: OS::Heat::None
+
   OS::TripleO::Services::NeutronCorePluginMidonet: puppet/services/neutron-midonet.yaml
   OS::TripleO::Services::NeutronOvsAgent: puppet/services/neutron-ovs-agent.yaml
+  OS::TripleO::Services::NeutronLinuxbridgeAgent: OS::Heat::None
   OS::TripleO::Services::ComputeNeutronOvsAgent: puppet/services/neutron-ovs-agent.yaml
   OS::TripleO::Services::Pacemaker: OS::Heat::None
+  OS::TripleO::Services::PacemakerRemote: OS::Heat::None
   OS::TripleO::Services::NeutronSriovAgent: OS::Heat::None
   OS::TripleO::Services::RabbitMQ: puppet/services/rabbitmq.yaml
+  OS::TripleO::Services::Qdr: OS::Heat::None
   OS::TripleO::Services::HAproxy: puppet/services/haproxy.yaml
+  OS::TripleO::Services::HAProxyPublicTLS: OS::Heat::None
+  OS::TripleO::Services::HAProxyInternalTLS: OS::Heat::None
   OS::TripleO::Services::Keepalived: puppet/services/keepalived.yaml
   OS::TripleO::Services::Memcached: puppet/services/memcached.yaml
   OS::TripleO::Services::SaharaApi: OS::Heat::None
   OS::TripleO::Services::SaharaEngine: OS::Heat::None
+  OS::TripleO::Services::Securetty: OS::Heat::None
+  OS::TripleO::Services::Sshd: puppet/services/sshd.yaml
   OS::TripleO::Services::Redis: puppet/services/database/redis.yaml
   OS::TripleO::Services::NovaConductor: puppet/services/nova-conductor.yaml
-  OS::TripleO::Services::MongoDb: puppet/services/database/mongodb.yaml
+  OS::TripleO::Services::MongoDb: puppet/services/disabled/mongodb-disabled.yaml
   OS::TripleO::Services::NovaApi: puppet/services/nova-api.yaml
+  OS::TripleO::Services::NovaPlacement: puppet/services/nova-placement.yaml
   OS::TripleO::Services::NovaMetadata: puppet/services/nova-metadata.yaml
   OS::TripleO::Services::NovaScheduler: puppet/services/nova-scheduler.yaml
   OS::TripleO::Services::NovaConsoleauth: puppet/services/nova-consoleauth.yaml
@@ -168,24 +184,35 @@ resource_registry:
   OS::TripleO::Services::NovaLibvirt: puppet/services/nova-libvirt.yaml
   OS::TripleO::Services::Ntp: puppet/services/time/ntp.yaml
   OS::TripleO::Services::SwiftProxy: puppet/services/swift-proxy.yaml
+  OS::TripleO::Services::ExternalSwiftProxy: OS::Heat::None
   OS::TripleO::Services::SwiftStorage: puppet/services/swift-storage.yaml
   OS::TripleO::Services::SwiftRingBuilder: puppet/services/swift-ringbuilder.yaml
   OS::TripleO::Services::Snmp: puppet/services/snmp.yaml
+  OS::TripleO::Services::Tacker: OS::Heat::None
   OS::TripleO::Services::Timezone: puppet/services/time/timezone.yaml
   OS::TripleO::Services::CeilometerApi: puppet/services/ceilometer-api.yaml
-  OS::TripleO::Services::CeilometerCollector: puppet/services/ceilometer-collector.yaml
-  OS::TripleO::Services::CeilometerExpirer: puppet/services/ceilometer-expirer.yaml
+  OS::TripleO::Services::CeilometerCollector: puppet/services/disabled/ceilometer-collector-disabled.yaml
+  OS::TripleO::Services::CeilometerExpirer: puppet/services/disabled/ceilometer-expirer-disabled.yaml
   OS::TripleO::Services::CeilometerAgentCentral: puppet/services/ceilometer-agent-central.yaml
   OS::TripleO::Services::CeilometerAgentNotification: puppet/services/ceilometer-agent-notification.yaml
   OS::TripleO::Services::ComputeCeilometerAgent: puppet/services/ceilometer-agent-compute.yaml
+  OS::TripleO::Services::CeilometerAgentIpmi: puppet/services/ceilometer-agent-ipmi.yaml
   OS::TripleO::Services::Horizon: puppet/services/horizon.yaml
+  # Undercloud Telemetry services
+  OS::TripleO::Services::UndercloudCeilometerAgentCentral: OS::Heat::None
+  OS::TripleO::Services::UndercloudCeilometerAgentNotification: OS::Heat::None
+  OS::TripleO::Services::UndercloudCeilometerAgentIpmi: OS::Heat::None
+
   #Gnocchi services
   OS::TripleO::Services::GnocchiApi: puppet/services/gnocchi-api.yaml
   OS::TripleO::Services::GnocchiMetricd: puppet/services/gnocchi-metricd.yaml
   OS::TripleO::Services::GnocchiStatsd: puppet/services/gnocchi-statsd.yaml
-  OS::TripleO::Services::VipHosts: puppet/services/vip-hosts.yaml
+  OS::TripleO::Services::UndercloudGnocchiApi: OS::Heat::None
+  OS::TripleO::Services::UndercloudGnocchiMetricd: OS::Heat::None
+  OS::TripleO::Services::UndercloudGnocchiStatsd: OS::Heat::None
   # Services that are disabled by default (use relevant environment files):
   OS::TripleO::Services::FluentdClient: OS::Heat::None
+  OS::TripleO::Services::Collectd: OS::Heat::None
   OS::TripleO::LoggingConfiguration: puppet/services/logging/fluentd-config.yaml
   OS::TripleO::Services::ManilaApi: OS::Heat::None
   OS::TripleO::Services::ManilaScheduler: OS::Heat::None
@@ -195,21 +222,51 @@ resource_registry:
   OS::TripleO::Services::ManilaBackendCephFs: OS::Heat::None
   OS::TripleO::Services::ComputeNeutronL3Agent: OS::Heat::None
   OS::TripleO::Services::ComputeNeutronMetadataAgent: OS::Heat::None
+  OS::TripleO::Services::BarbicanApi: OS::Heat::None
   OS::TripleO::Services::AodhApi: puppet/services/aodh-api.yaml
   OS::TripleO::Services::AodhEvaluator: puppet/services/aodh-evaluator.yaml
   OS::TripleO::Services::AodhNotifier: puppet/services/aodh-notifier.yaml
   OS::TripleO::Services::AodhListener: puppet/services/aodh-listener.yaml
+  OS::TripleO::Services::UndercloudAodhApi: OS::Heat::None
+  OS::TripleO::Services::UndercloudAodhEvaluator: OS::Heat::None
+  OS::TripleO::Services::UndercloudAodhNotifier: OS::Heat::None
+  OS::TripleO::Services::UndercloudAodhListener: OS::Heat::None
+  OS::TripleO::Services::PankoApi: puppet/services/panko-api.yaml
+  OS::TripleO::Services::UndercloudPankoApi: OS::Heat::None
   OS::TripleO::Services::MistralEngine: OS::Heat::None
   OS::TripleO::Services::MistralApi: OS::Heat::None
   OS::TripleO::Services::MistralExecutor: OS::Heat::None
   OS::TripleO::Services::IronicApi: OS::Heat::None
   OS::TripleO::Services::IronicConductor: OS::Heat::None
+  OS::TripleO::Services::IronicInspector: OS::Heat::None
   OS::TripleO::Services::NovaIronic: OS::Heat::None
   OS::TripleO::Services::TripleoPackages: puppet/services/tripleo-packages.yaml
   OS::TripleO::Services::TripleoFirewall: puppet/services/tripleo-firewall.yaml
   OS::TripleO::Services::OpenDaylightApi: OS::Heat::None
   OS::TripleO::Services::OpenDaylightOvs: OS::Heat::None
   OS::TripleO::Services::SensuClient: OS::Heat::None
+  OS::TripleO::Services::TLSProxyBase: OS::Heat::None
+  OS::TripleO::Services::Zaqar: OS::Heat::None
+  OS::TripleO::Services::NeutronML2FujitsuCfab: OS::Heat::None
+  OS::TripleO::Services::NeutronML2FujitsuFossw: OS::Heat::None
+  OS::TripleO::Services::CinderBackendDellPs: OS::Heat::None
+  OS::TripleO::Services::CinderBackendDellSc: OS::Heat::None
+  OS::TripleO::Services::CinderBackendNetApp: OS::Heat::None
+  OS::TripleO::Services::CinderBackendScaleIO: OS::Heat::None
+  OS::TripleO::Services::CinderHPELeftHandISCSI: OS::Heat::None
+  OS::TripleO::Services::Etcd: OS::Heat::None
+  OS::TripleO::Services::Ec2Api: OS::Heat::None
+  OS::TripleO::Services::AuditD: OS::Heat::None
+  OS::TripleO::Services::OctaviaApi: OS::Heat::None
+  OS::TripleO::Services::OctaviaHealthManager: OS::Heat::None
+  OS::TripleO::Services::OctaviaHousekeeping: OS::Heat::None
+  OS::TripleO::Services::OctaviaWorker: OS::Heat::None
+  OS::TripleO::Services::MySQLClient: puppet/services/database/mysql-client.yaml
+  OS::TripleO::Services::Vpp: OS::Heat::None
+  OS::TripleO::Services::NeutronVppAgent: OS::Heat::None
+  OS::TripleO::Services::Docker: OS::Heat::None
+  OS::TripleO::Services::CertmongerUser: OS::Heat::None
+  OS::TripleO::Services::Iscsid: OS::Heat::None
 
 parameter_defaults:
   EnablePackageInstall: false
