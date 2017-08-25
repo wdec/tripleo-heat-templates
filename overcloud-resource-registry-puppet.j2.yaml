@@ -267,6 +267,7 @@ resource_registry:
   OS::TripleO::Services::Docker: OS::Heat::None
   OS::TripleO::Services::CertmongerUser: OS::Heat::None
   OS::TripleO::Services::Iscsid: OS::Heat::None
+  OS::TripleO::Services::CiscoVpfa: OS::Heat::None
 
 parameter_defaults:
   EnablePackageInstall: false

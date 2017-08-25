@@ -17,13 +17,25 @@ parameters:
     type: string
     description: The password for the VTS server.
     hidden: true
-  VTSAddress:
+  VTSServer:
     description: VTS Server IP address
     type: string
   VTSPort:
     description: Port of the VTS Server
     type: number
     default: 8888
+
+# Temporary till we do them in tripleO
+  VTSNetworkIPv4Address:
+    description: IP address of the VPFA on the underlay
+    type: string
+    default: ''
+  VTSNetworkv4Mask:
+    type: string
+    default: ''
+  VTSNetworkIPv4Gateway:
+    type: string
+    default: ''
 
   # COMPUTE_HOST_NAME and HOSTNAME need to be derived from hiera, unless HOSTNAME is defined.
   VPFAHostname:
@@ -46,7 +58,9 @@ parameters:
   VifType:
     description: VIF Type
     type: string
-    default: vhostuser
+    default: 'vhostuser'
+
+  # The interface list should come in from os-net-config
   UnderlayInterfaces:
     description: List of underlay interfaces
     type: comma_delimited_list
@@ -74,8 +88,8 @@ parameters:
 
 resources:
 
-  NeutronBase:
-    type: ./neutron-base.yaml
+  Vpp:
+    type: ./vpp.yaml
     properties:
       ServiceNetMap: {get_param: ServiceNetMap}
       DefaultPasswords: {get_param: DefaultPasswords}
@@ -89,25 +103,20 @@ outputs:
       service_name: cisco_vpfa
       config_settings:
         map_merge:
-          - get_attr: [NeutronBase, role_data, config_settings]
-          - cisco_vpfa::vts_url_ip: {get_param: VTSServer}
+          - get_attr: [Vpp, role_data, config_settings]
+          - tripleo::profile::base::cisco_vpfa::vts_url_ip: {get_param: VTSServer}
+            tripleo::profile::base::cisco_vpfa::vts_port: {get_param: VTSPort}
+            cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
+            cisco_vpfa::compute_hostname: {get_param: ComputeHostName}
+            cisco_vpfa::vts_username: {get_param: VTSUsername}
+            cisco_vpfa::vts_password: {get_param: VTSPassword}
+            cisco_vpfa::net_config_method: {get_param: NetworkConfigMethod}
+            cisco_vpfa::name_server: {get_param: NetworkNameServerIP}
+            cisco_vpfa::under_if_list: {get_param: UnderlayInterfaces}
+            cisco_vpfa::underlay_net_list: {get_param: UnderlayIpNewtorksList}
+            cisco_vpfa::vpfa_ipv4_address: {get_param: VTSNetworkIPv4Address}
+            cisco_vpfa::vpfa_ipv4_mask: {get_param: VTSNetworkv4Mask}
+            cisco_vpfa::vts_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
 
-            tripleo::profile::base::neutron::plugins::ml2::vts::vts_port: {get_param: VTSPort}
-            neutron::plugins::ml2::cisco::vts::vts_username: {get_param: VTSUsername}
-            neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
-            neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
-            neutron::plugins::ml2::cisco::vts::vts_timeout: {get_param: VTSTimeout}
-
-
-
-
-            neutron::agents::ml2::ovs::local_ip: {get_param: [ServiceNetMap, NeutronTenantNetwork]}
-            neutron::plugins::ovs::opendaylight::provider_mappings:
-            tripleo.opendaylight_ovs.firewall_rules:
-              '118 neutron vxlan networks':
-                 proto: 'udp'
-                 dport: 4789
-              '136 neutron gre networks':
-                 proto: 'gre'
-        step_config: |
+      step_config: |
         include tripleo::profile::base::cisco_vpfa

@@ -1,0 +1,49 @@
+# A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
+resource_registry:
+  OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+  OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
+  # TODO: we need different configs on compute nodes than controller nodes.
+  # we need to create another service file in puppet directory for compute and link it here.
+
+  # We'll add VTS agent when its service is implemented.
+  #OS::TripleO::Services::ComputeNeutronOvsAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
+  #or this OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
+
+  # Disabling Neutron services that overlap with VTS
+  OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
+  OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
+  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+  # Disabling Vpfa till it's implemented
+  # OS::TripleO::Services::CiscoVpfa: puppet/services/neutron-plugin-cisco-vts.yaml
+
+parameter_defaults:
+  #VTSUsername: 'admin'
+  #VTSPassword: ''
+  #VTSServer: '192.168.0.1'
+  #VTSVMMID: ''
+  #NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
+  NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
+  NeutronTypeDrivers: 'vxlan,vlan,flat'
+  NeutronServicePlugins: 'cisco_vts_router,trunk'
+
+  #VTS Agent specific
+  #VTSTimeout:
+  VTSPhysicalNet: ''
+  VTSRetries: 5
+  VTSPollingInterval: 120
+
+  #VPFA Specific
+  VPFAHostname: 'foo'
+  ComputeHostName: 'foo.com'
+  #NetworkConfigMethod: ''
+  NetworkNameServerIP: ''
+  VifType: 'vhostuser'
+
+  #Temporary VPFA
+  # TODO: Remove all these
+  UnderlayInterfaces: 'ens224'
+  UnderlayIpNewtorksList: '11.0.0.1/24'
+  VTSNetworkIPv4Address: '10.0.0.11'
+  VTSNetworkv4Mask: '24'
+  VTSNetworkIPv4Gateway: '10.0.0.1'
+
