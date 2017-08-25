@@ -1,7 +1,7 @@
 heat_template_version: 2016-04-08
 
 description: >
-  OpenStack Neutron OVS agent configured with Puppet
+  OpenStack Neutron Cisco VTS agent configured with Puppet
 
 parameters:
   ServiceNetMap:
@@ -10,65 +10,101 @@ parameters:
                  via parameter_defaults in the resource registry.  This
                  mapping overrides those in ServiceNetMapDefaults.
     type: json
-  DefaultPasswords:
-    default: {}
-    type: json
   EndpointMap:
     default: {}
     description: Mapping of service endpoint -> protocol. Typically set
                  via parameter_defaults in the resource registry.
     type: json
-  NeutronEnableL2Pop:
+  VTSUsername:
+    default: 'admin'
+    description: The username for the VTS server.
     type: string
-    description: >
-        Enable/disable the L2 population feature in the Neutron agents.
-    default: "False"
-  NeutronBridgeMappings:
-    description: >
-      The OVS logical->physical bridge mappings to use. See the Neutron
-      documentation for details. Defaults to mapping br-ex - the external
-      bridge on hosts - to a physical name 'datacentre' which can be used
-      to create provider networks (and we use this for the default floating
-      network) - if changing this either use different post-install network
-      scripts or be sure to keep 'datacentre' as a mapping network name.
-    type: comma_delimited_list
-    default: "datacentre:br-ex"
-  NeutronTunnelTypes:
-    default: 'vxlan'
-    description: |
-        The tunnel types for the Neutron tenant network.
-    type: comma_delimited_list
-  NeutronAgentExtensions:
-    default: "qos"
-    description: |
-        Comma-separated list of extensions enabled for the Neutron agents.
-    type: comma_delimited_list
-  NeutronEnableDVR:
-    default: False
-    description: |
-      Enable support for distributed routing in the OVS Agent.
-    type: boolean
-  NeutronEnableARPResponder:
-    default: false
-    description: |
-      Enable ARP responder feature in the OVS Agent.
-    type: boolean
-  MonitoringSubscriptionNeutronOvs:
-    default: 'overcloud-neutron-ovs-agent'
+  VTSPassword:
+    default: 'admin'
     type: string
-  NeutronOVSFirewallDriver:
+    description: The password for the VTS server.
+    hidden: true
+  VTSServer:
+    description: VTS Server IP address
+    type: string
+  VTSVMMID:
+    description: VMM ID used on VTS
+    type: string
     default: ''
-    description: |
-      Configure the classname of the firewall driver to use for implementing
-      security groups. Possible values depend on system configuration. Some
-      examples are: noop, openvswitch, iptables_hybrid. The default value of an
-      empty string will result in a default supported configuration.
+  VTSPort:
+    description: Port of the VTS Server
+    type: number
+    default: 8888
+  VTSTimeout:
+    description: Timeout for VTS server
+    type: number
+    default: 120
+  VTSPhysicalNet:
+    description: Name of physical network
     type: string
-  NeutronOpenVswitchAgentLoggingSource:
-    type: json
-    default:
-      tag: openstack.neutron.agent.openvswitch
-      path: /var/log/neutron/openvswitch-agent.log
+  VTSRetries:
+    description: Max number of retries when connecting to VTS
+    type: number
+    default: 15
+  VTSPollingInterval:
+    description: NCS Polling interval in seconds
+    type: number
+    default: 6
+
+  # Remained is default for OSV agent
+
+    NeutronEnableL2Pop:
+      type: string
+      description: >
+          Enable/disable the L2 population feature in the Neutron agents.
+      default: "False"
+    NeutronBridgeMappings:
+      description: >
+        The OVS logical->physical bridge mappings to use. See the Neutron
+        documentation for details. Defaults to mapping br-ex - the external
+        bridge on hosts - to a physical name 'datacentre' which can be used
+        to create provider networks (and we use this for the default floating
+        network) - if changing this either use different post-install network
+        scripts or be sure to keep 'datacentre' as a mapping network name.
+      type: comma_delimited_list
+      default: "datacentre:br-ex"
+    NeutronTunnelTypes:
+      default: 'vxlan'
+      description: |
+          The tunnel types for the Neutron tenant network.
+      type: comma_delimited_list
+    NeutronAgentExtensions:
+      default: "qos"
+      description: |
+          Comma-separated list of extensions enabled for the Neutron agents.
+      type: comma_delimited_list
+    NeutronEnableDVR:
+      default: False
+      description: |
+        Enable support for distributed routing in the OVS Agent.
+      type: boolean
+    NeutronEnableARPResponder:
+      default: false
+      description: |
+        Enable ARP responder feature in the OVS Agent.
+      type: boolean
+    MonitoringSubscriptionNeutronOvs:
+      default: 'overcloud-neutron-ovs-agent'
+      type: string
+    NeutronOVSFirewallDriver:
+      default: ''
+      description: |
+        Configure the classname of the firewall driver to use for implementing
+        security groups. Possible values depend on system configuration. Some
+        examples are: noop, openvswitch, iptables_hybrid. The default value of an
+        empty string will result in a default supported configuration.
+      type: string
+    NeutronOpenVswitchAgentLoggingSource:
+      type: json
+      default:
+        tag: openstack.neutron.agent.openvswitch
+        path: /var/log/neutron/openvswitch-agent.log
+
 
 resources:
 
@@ -81,9 +117,9 @@ resources:
 
 outputs:
   role_data:
-    description: Role data for the Neutron OVS agent service.
+    description: Role data for the Cisco Neutron VTS agent service.
     value:
-      service_name: neutron_ovs_agent
+      service_name: neutron_cisco_vts_agent
       monitoring_subscription: {get_param: MonitoringSubscriptionNeutronOvs}
       logging_source: {get_param: NeutronOpenVswitchAgentLoggingSource}
       logging_groups:
@@ -124,4 +160,4 @@ outputs:
               '136 neutron gre networks':
                 proto: 'gre'
       step_config: |
-        include ::tripleo::profile::base::neutron::ovs
+        include ::tripleo::profile::base::neutron::cisco_vts_agent

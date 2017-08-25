@@ -1,0 +1,113 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Cisco VPFA Configuration.
+
+parameters:
+
+#Question: Can we have some of these defined in one module, and used/mapped in the outputs section of different
+#modules?
+
+  VTSUsername:
+    default: 'admin'
+    description: The username for the VTS server.
+    type: string
+  VTSPassword:
+    default: 'admin'
+    type: string
+    description: The password for the VTS server.
+    hidden: true
+  VTSAddress:
+    description: VTS Server IP address
+    type: string
+  VTSPort:
+    description: Port of the VTS Server
+    type: number
+    default: 8888
+
+  # COMPUTE_HOST_NAME and HOSTNAME need to be derived from hiera, unless HOSTNAME is defined.
+  VPFAHostname:
+    description: Name of the VPFA
+    type: string
+    default: ''
+  ComputeHostName:
+    description: Name of the VPFA host
+    type: string
+    default: ''
+  NetworkConfigMethod:
+    description: Network configuration method
+    type: string
+    default: 'static'
+  # Network IP address and Netmask need to be assigned via deployment hook
+  NetworkNameServerIP:
+    description: IP address of Name Server
+    type: string
+    default: ''
+  VifType:
+    description: VIF Type
+    type: string
+    default: vhostuser
+  UnderlayInterfaces:
+    description: List of underlay interfaces
+    type: comma_delimited_list
+    default: ''
+  UnderlayIpNewtorksList:
+    description: List of other underlay networks reachable through the underlay interface
+    type: comma_delimited_list
+    default: ''
+
+  EndpointMap:
+    default: {}
+    description: Mapping of service endpoint -> protocol. Typically set
+                 via parameter_defaults in the resource registry.
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: Mapping of service_name -> network name. Typically set
+                 via parameter_defaults in the resource registry.  This
+                 mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+
+resources:
+
+  NeutronBase:
+    type: ./neutron-base.yaml
+    properties:
+      ServiceNetMap: {get_param: ServiceNetMap}
+      DefaultPasswords: {get_param: DefaultPasswords}
+      EndpointMap: {get_param: EndpointMap}
+      RoleName: {get_param: RoleName}
+
+outputs:
+  role_data:
+    description: Role Data for the VPFA service.
+    value:
+      service_name: cisco_vpfa
+      config_settings:
+        map_merge:
+          - get_attr: [NeutronBase, role_data, config_settings]
+          - cisco_vpfa::vts_url_ip: {get_param: VTSServer}
+
+            tripleo::profile::base::neutron::plugins::ml2::vts::vts_port: {get_param: VTSPort}
+            neutron::plugins::ml2::cisco::vts::vts_username: {get_param: VTSUsername}
+            neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
+            neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
+            neutron::plugins::ml2::cisco::vts::vts_timeout: {get_param: VTSTimeout}
+
+
+
+
+            neutron::agents::ml2::ovs::local_ip: {get_param: [ServiceNetMap, NeutronTenantNetwork]}
+            neutron::plugins::ovs::opendaylight::provider_mappings:
+            tripleo.opendaylight_ovs.firewall_rules:
+              '118 neutron vxlan networks':
+                 proto: 'udp'
+                 dport: 4789
+              '136 neutron gre networks':
+                 proto: 'gre'
+        step_config: |
+        include tripleo::profile::base::cisco_vpfa
