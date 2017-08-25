@@ -1,0 +1,18 @@
+## A Heat environment that can be used to deploy Cisco VPFA
+resource_registry:
+  OS::TripleO::Services::CiscoVpfa: ../puppet/services/cisco-vpfa.yaml
+  # Disabling Neutron services that overlap with VTS
+  OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
+  OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
+  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+
+parameter_defaults:
+  ## NeutronDpdkCoreList and NeutronDpdkMemoryChannels are REQUIRED settings.
+  ## Attempting to deploy DPDK without appropriate values will cause deployment to fail or lead to unstable deployments.
+  #NeutronDpdkCoreList: ""
+  #NeutronDpdkMemoryChannels: ""
+
+  #NeutronDpdkSocketMemory: ""
+  #NeutronDpdkDriverType: "vfio-pci"
+  #NovaReservedHostMemory: 4096
+  #NovaVcpuPinSet: ""
