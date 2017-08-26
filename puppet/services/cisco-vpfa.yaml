@@ -85,16 +85,13 @@ parameters:
     default: {}
     type: json
 
+#Uncomment and complete if vpp resource comes to be needed
+#resources:
 
-resources:
+#  Vpp:
+#    type: ./vpp.yaml
+#    properties:
 
-  Vpp:
-    type: ./vpp.yaml
-    properties:
-      ServiceNetMap: {get_param: ServiceNetMap}
-      DefaultPasswords: {get_param: DefaultPasswords}
-      EndpointMap: {get_param: EndpointMap}
-      RoleName: {get_param: RoleName}
 
 outputs:
   role_data:
@@ -103,9 +100,9 @@ outputs:
       service_name: cisco_vpfa
       config_settings:
         map_merge:
-          - get_attr: [Vpp, role_data, config_settings]
-          - tripleo::profile::base::cisco_vpfa::vts_url_ip: {get_param: VTSServer}
-            tripleo::profile::base::cisco_vpfa::vts_port: {get_param: VTSPort}
+#          - get_attr: [Vpp, role_data, config_settings]
+          - vts::vts_ip: {get_param: VTSServer}
+            vts::vts_port: {get_param: VTSPort}
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
             cisco_vpfa::compute_hostname: {get_param: ComputeHostName}
             cisco_vpfa::vts_username: {get_param: VTSUsername}
