@@ -70,8 +70,8 @@ outputs:
       config_settings:
         map_merge:
           - get_attr: [NeutronMl2Base, role_data, config_settings]
-          - tripleo::profile::base::neutron::plugins::ml2::vts::vts_url_ip: {get_param: VTSServer}
-            tripleo::profile::base::neutron::plugins::ml2::vts::vts_port: {get_param: VTSPort}
+          - vts::vts_ip: {get_param: VTSServer}
+            vts::vts_port: {get_param: VTSPort}
             neutron::plugins::ml2::cisco::vts::vts_username: {get_param: VTSUsername}
             neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
             neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
