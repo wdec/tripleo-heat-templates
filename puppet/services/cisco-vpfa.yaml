@@ -5,9 +5,6 @@ description: >
 
 parameters:
 
-#Question: Can we have some of these defined in one module, and used/mapped in the outputs section of different
-#modules?
-
   VTSUsername:
     default: 'admin'
     description: The username for the VTS server.

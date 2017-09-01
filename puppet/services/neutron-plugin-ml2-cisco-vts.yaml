@@ -30,14 +30,16 @@ parameters:
     default: 120
   EndpointMap:
     default: {}
-    description: Mapping of service endpoint -> protocol. Typically set
-                 via parameter_defaults in the resource registry.
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
     type: json
   ServiceNetMap:
     default: {}
-    description: Mapping of service_name -> network name. Typically set
-                 via parameter_defaults in the resource registry.  This
-                 mapping overrides those in ServiceNetMapDefaults.
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
     type: json
   DefaultPasswords:
     default: {}
