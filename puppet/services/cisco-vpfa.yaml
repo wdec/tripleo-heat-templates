@@ -69,14 +69,16 @@ parameters:
 
   EndpointMap:
     default: {}
-    description: Mapping of service endpoint -> protocol. Typically set
-                 via parameter_defaults in the resource registry.
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
     type: json
   ServiceNetMap:
     default: {}
-    description: Mapping of service_name -> network name. Typically set
-                 via parameter_defaults in the resource registry.  This
-                 mapping overrides those in ServiceNetMapDefaults.
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
     type: json
   DefaultPasswords:
     default: {}
@@ -101,7 +103,7 @@ outputs:
           - vts::vts_ip: {get_param: VTSServer}
             vts::vts_port: {get_param: VTSPort}
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
-            cisco_vpfa::compute_hostname: {get_param: ComputeHostName}
+            #cisco_vpfa::compute_hostname: {get_param: ComputeHostName}
             cisco_vpfa::vts_username: {get_param: VTSUsername}
             cisco_vpfa::vts_password: {get_param: VTSPassword}
             cisco_vpfa::net_config_method: {get_param: NetworkConfigMethod}
