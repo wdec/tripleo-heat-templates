@@ -30,17 +30,13 @@ parameters:
   VTSNetworkv4Mask:
     type: string
     default: ''
+
   VTSNetworkIPv4Gateway:
     type: string
     default: ''
-
-  # COMPUTE_HOST_NAME and HOSTNAME need to be derived from hiera, unless HOSTNAME is defined.
+  # HOSTNAME is set automatically unless defined in environment.
   VPFAHostname:
-    description: Name of the VPFA
-    type: string
-    default: ''
-  ComputeHostName:
-    description: Name of the VPFA host
+    description: (Optional) Name of the VPFA
     type: string
     default: ''
   NetworkConfigMethod:
@@ -56,10 +52,12 @@ parameters:
     description: VIF Type
     type: string
     default: 'vhostuser'
-
-  # The interface list should come in from os-net-config
-  UnderlayInterfaces:
+  UnderlayInterface:
     description: List of underlay interfaces
+    type: string
+    default: ''
+  BondIfList:
+    description: (Optional) List of underlay interfaces to bond
     type: comma_delimited_list
     default: ''
   UnderlayIpNewtorksList:
@@ -91,7 +89,6 @@ parameters:
 #    type: ./vpp.yaml
 #    properties:
 
-
 outputs:
   role_data:
     description: Role Data for the VPFA service.
@@ -103,16 +100,17 @@ outputs:
           - vts::vts_ip: {get_param: VTSServer}
             vts::vts_port: {get_param: VTSPort}
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
-            #cisco_vpfa::compute_hostname: {get_param: ComputeHostName}
             cisco_vpfa::vts_username: {get_param: VTSUsername}
             cisco_vpfa::vts_password: {get_param: VTSPassword}
-            cisco_vpfa::net_config_method: {get_param: NetworkConfigMethod}
-            cisco_vpfa::name_server: {get_param: NetworkNameServerIP}
-            cisco_vpfa::under_if_list: {get_param: UnderlayInterfaces}
-            cisco_vpfa::underlay_net_list: {get_param: UnderlayIpNewtorksList}
-            cisco_vpfa::vpfa_ipv4_address: {get_param: VTSNetworkIPv4Address}
-            cisco_vpfa::vpfa_ipv4_mask: {get_param: VTSNetworkv4Mask}
-            cisco_vpfa::vts_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
+            cisco_vpfa::vif_type: {get_param: VifType}
+            cisco_vpfa::network_config_method: {get_param: NetworkConfigMethod}
+            cisco_vpfa::network_nameserver: {get_param: NetworkNameServerIP}
+            cisco_vpfa::underlay_interface: {get_param: UnderlayInterface}
+            cisco_vpfa::bond_if_list: {get_param: BondIfList}
+            cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
+            #cisco_vpfa::vpfa_ipv4_address: {get_param: VTSNetworkIPv4Address}
+            #cisco_vpfa::vpfa_ipv4_mask: {get_param: VTSNetworkv4Mask}
+            cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
 
       step_config: |
         include tripleo::profile::base::cisco_vpfa

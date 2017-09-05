@@ -35,13 +35,13 @@ parameter_defaults:
   #VPFA Specific
   VPFAHostname: 'foo'
   ComputeHostName: 'foo.com'
-  #NetworkConfigMethod: ''
+  NetworkConfigMethod: 'static'
   NetworkNameServerIP: ''
   VifType: 'vhostuser'
 
   #Temporary VPFA
   # TODO: Remove all these
-  UnderlayInterfaces: 'ens224'
+  UnderlayInterface: 'ens224'
   UnderlayIpNewtorksList: '11.0.0.1/24'
   VTSNetworkIPv4Address: '10.0.0.11'
   VTSNetworkv4Mask: '24'
