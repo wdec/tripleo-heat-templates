@@ -18,6 +18,7 @@ resource_registry:
 
   # VPP Config generation
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
+  #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
 
 parameter_defaults:
@@ -75,7 +76,7 @@ parameter_defaults:
     "ENABLE_LLDP": "True",
     "MAX_MTU_SIZE": "9000",
     "HEADERS_FOR_VPP": "64",
-    "PCI_DRIVER": "vfio-pci",
+    "PCI_DRIVER": "uio_pci_generic",
     "HOSTCPUS": "2",
     "VIF_TYPE": "vhostuser",
     "VPPCPUS": "1",
