@@ -53,7 +53,7 @@ parameters:
     type: string
     default: 'vhostuser'
   UnderlayInterface:
-    description: List of underlay interfaces
+    description: Name of underlay interface or bond mode
     type: string
     default: ''
   BondIfList:

@@ -16,34 +16,67 @@ resource_registry:
   # Disabling Vpfa till it's implemented
   # OS::TripleO::Services::CiscoVpfa: ../puppet/services/cisco-vpfa.yaml
 
+  # VPP Config generation
+  OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
+  #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
+
 parameter_defaults:
+
+  ###############
+  ### General ###
+  ###############
   #VTSUsername: 'admin'
   #VTSPassword: ''
   #VTSServer: '192.168.0.1'
   #VTSVMMID: ''
+
+  ###################
+  ### Neutron ML2 ###
+  ###################
   #NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
   NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
   NeutronTypeDrivers: 'vxlan,vlan,flat'
   NeutronServicePlugins: 'cisco_vts_router,trunk'
 
-  #VTS Agent specific
+  ########################
+  ### VTS Agent Config ###
+  ########################
   #VTSTimeout:
   VTSPhysicalNet: ''
   VTSRetries: 5
   VTSPollingInterval: 120
 
-  #VPFA Specific
-  VPFAHostname: 'foo'
+  ###################
+  ### VPFA Config ###
+  ###################
+  #VPFAHostname: 'foo'
   ComputeHostName: 'foo.com'
   NetworkConfigMethod: 'static'
   NetworkNameServerIP: ''
   VifType: 'vhostuser'
-
-  #Temporary VPFA
-  # TODO: Remove all these
   UnderlayInterface: 'ens224'
   UnderlayIpNewtorksList: '11.0.0.1/24'
-  VTSNetworkIPv4Address: '10.0.0.11'
-  VTSNetworkv4Mask: '24'
   VTSNetworkIPv4Gateway: '10.0.0.1'
 
+  # TODO: Temp placeholder. Replace these with per node config.
+  VTSNetworkIPv4Address: '10.0.0.11'
+  VTSNetworkv4Mask: '24'
+
+  ###################
+  ### VPP Config  ###
+  ###################
+  # MUST be in JSON #
+  ###################
+
+  VPPparams: |
+    {"RECONFIGURE": "False",
+    "ENABLE_VPP_WORKERS": "False",
+    "ENABLE_JUMBO_FRAMES": "True",
+    "ENABLE_LLDP": "True",
+    "MAX_MTU_SIZE": "9000",
+    "HEADERS_FOR_VPP": "64",
+    "PCI_DRIVER": "vfio-pci",
+    "HOSTCPUS": "2",
+    "VIF_TYPE": "vhostuser",
+    "VPPCPUS": "1",
+    "L2_MODE": "True"}
