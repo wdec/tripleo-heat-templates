@@ -47,7 +47,7 @@ resources:
         import six
         import sys
 
-        VPFA_INIT = 'vpfa_init.sh > /tmp/vpp_script_out'
+        VPFA_INIT = 'vpfa_init.sh'
 
         input = sys.stdin.readline() or '{}'
         input = ast.literal_eval(input)
@@ -64,8 +64,8 @@ resources:
 
         sproc = subprocess.Popen(VPFA_INIT.split(), env=dict(os.environ, **env_params))
         output, error = sproc.communicate()
-        print('OUTPUT: {0}  ERROR: {1}'.format(output, error))
-        " > /tmp/extra_conf_out
+        print('VPFA_INIT OUTPUT: {0}  ERROR: {1}'.format(output, error))
+        " > /tmp/vpfa_init_out
 
 
   CustomExtraDeploymentPre:
@@ -74,6 +74,7 @@ resources:
       name: Cisco_VPFA_ExtraConfig
       config: {get_resource: CustomExtraConfigPre}
       server: {get_param: server}
+      actions: ['CREATE','UPDATE']
       input_values:
         vpp_conf:
             - VPP_PARAMS: {get_param: VPPparams}
