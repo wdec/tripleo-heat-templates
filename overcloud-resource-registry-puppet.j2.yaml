@@ -211,6 +211,7 @@ resource_registry:
   OS::TripleO::Services::OpenDaylightApi: OS::Heat::None
   OS::TripleO::Services::OpenDaylightOvs: OS::Heat::None
   OS::TripleO::Services::SensuClient: OS::Heat::None
+  OS::TripleO::Services::Vpp: OS::Heat::None
 
 parameter_defaults:
   EnablePackageInstall: false
