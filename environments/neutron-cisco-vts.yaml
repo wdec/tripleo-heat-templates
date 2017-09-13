@@ -13,13 +13,17 @@ resource_registry:
   OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
-  # Disabling Vpfa till it's implemented
-  # OS::TripleO::Services::CiscoVpfa: ../puppet/services/cisco-vpfa.yaml
+
+  # VPFA Configuration
+  OS::TripleO::Services::CiscoVpfa: ../puppet/services/cisco-vpfa.yaml
 
   # VPP Config generation
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
   #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
+
+  # VPP Module Config (mutually exclusive with VPP Config generation above)
+  # OS::TripleO::Services::Vpp: ../puppet/services/vpp.yaml 
 
 parameter_defaults:
 
