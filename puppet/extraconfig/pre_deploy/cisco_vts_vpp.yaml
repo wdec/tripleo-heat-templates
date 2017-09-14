@@ -28,6 +28,10 @@ parameters:
     description: List of other underlay networks reachable through the underlay interface
     type: comma_delimited_list
     default: ''
+  VPFAInit:
+    description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
+    type: string
+    default: "False"
 
 # Install of vpfa_init.sh and dpdk_nic_bind.py is required to carry out the configuration.
 resources:
@@ -41,13 +45,19 @@ resources:
         #!/bin/bash
         echo $vpp_conf > /tmp/conf_in
         echo $vpp_conf | python -c "
+
+        # Start of Python script
+
         import ast
         import os
         import subprocess
         import six
         import sys
+        import yaml
 
         VPFA_INIT = 'vpfa_init.sh'
+        DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
+        UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
 
         input = sys.stdin.readline() or '{}'
         input = ast.literal_eval(input)
@@ -62,9 +72,48 @@ resources:
             v = ','.join(v)
             env_params[k] = v
 
-        sproc = subprocess.Popen(VPFA_INIT.split(), env=dict(os.environ, **env_params))
-        output, error = sproc.communicate()
-        print('VPFA_INIT OUTPUT: {0}  ERROR: {1}'.format(output, error))
+        def vpfa_init(env_params):
+          # Launch vpfa_init script and config underlay mac
+          print('Launching VPFA Init shell script')
+          sproc = subprocess.Popen(VPFA_INIT.split(), env=dict(os.environ, **env_params))
+          output, error = sproc.communicate()
+          print('VPFA_INIT OUTPUT: {0}  ERROR: {1}'.format(output, error))
+
+        def mac_underlay_init(env_params):
+        # Assuming VPP configured by native module. Config only underlay mac address
+          print('Configuring underlay mac address for vpfa')
+          data = []
+          with open(DPDK_MAP) as f:
+            try:
+              data = yaml.load(f)
+            except yaml.YAMLError as exc:
+              print(exc)
+
+          for interface in data:
+            if 'name' in interface and interface['name'] == env_params['UNDERLAY_IF_NAME']:
+              underlay_mac = interface['mac_address']
+              print('CustomVPFA Extra Config found underlay MAC address: {0}'
+                    ' for interface: {1}'.format(underlay_mac, interface['name']))
+              break
+          else:
+            print('CustomVPFA Extra Config unable to '
+                  'find dpdk_map MAC address for: {0}'.format(env_params['UNDERLAY_IF_NAME']))
+            return
+            
+          with open(UNDERLAY_IF_FILE, 'w') as umac_file:
+            try:
+              umac_file.write(underlay_mac)
+              print('VPFA Extra Config wrote underlay mac file - OK')
+            except IOError as e:
+              print('VPFA Extra Config underlay mac file error'.format(e))
+
+        if 'VPFA_INIT' in env_params and env_params['VPFA_INIT'] == 'True':
+          vpfa_init(env_params)
+        else:
+          mac_underlay_init(env_params)
+
+        # End of Python script
+
         " > /tmp/vpfa_init_out
 
 
@@ -81,6 +130,7 @@ resources:
             - UNDERLAY_IF_NAME: {get_param: UnderlayInterface}
             - BOND_IF_LIST: {get_param: BondIfList }
             - UNDERLAY_IP_NET_LIST: {get_param: UnderlayIpNewtorksList}
+            - VPFA_INIT: {get_param: VPFAInit}
 
 outputs:
   deploy_stdout:

@@ -23,7 +23,7 @@ resource_registry:
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
 
   # VPP Module Config (mutually exclusive with VPP Config generation above)
-  # OS::TripleO::Services::Vpp: ../puppet/services/vpp.yaml 
+  # OS::TripleO::Services::Vpp: ../puppet/services/vpp.yaml
 
 parameter_defaults:
 
@@ -72,6 +72,9 @@ parameter_defaults:
   ###################
   # MUST be in JSON #
   ###################
+
+  # Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
+  VPFAInit: "False"
 
   VPPparams: |
     {"RECONFIGURE": "False",
