@@ -55,17 +55,17 @@ resources:
         # Start of Python script
 
         import ast
-        import json
         import os
         import subprocess
         import six
         import sys
         import yaml
+        import time
 
         VPFA_INIT = 'vpfa_init.sh'
         DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
         UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
-        HIERA_DATA = "/etc/puppet/hieradata/${node_id}.json"
+        HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
 
         def vpfa_init(env_params):
           # Launch vpfa_init script and config underlay mac
@@ -104,15 +104,16 @@ resources:
 
         def write_node_data(env_params):
           print('Extracting node specific params for vpfa')
-          node_env = env_params.get('${node_id}', {})
+          node_env = env_params.get('NODE_DATA', {}).get('${node_id}', {})
           with open(HIERA_DATA, 'w') as hierafile:
             try:
-              json.dump(node_env, hierafile)
+              yaml.safe_dump(node_env, hierafile, default_flow_style=False)
             except IOError as e:
               print('VPFA Extra Config node data file error'.format(e))
 
         # Main script
 
+        print('Cisco VTS Extra Pre Deployment script run.', time.strftime('%c'))
         input = sys.stdin.readline() or '{}'
         input = ast.literal_eval(input)
         env_params = dict()
@@ -135,14 +136,14 @@ resources:
 
         # End of Python script
 
-        " > /tmp/vpfa_init_out
+        " >> /tmp/vpfa_init_out
 
 
   VTSExtraDeploymentPre:
     type: OS::Heat::SoftwareDeployment
     properties:
       name: Cisco_VPFA_ExtraConfig
-      config: {get_resource: CustomExtraConfigPre}
+      config: {get_resource: VTSExtraConfigPre}
       server: {get_param: server}
       actions: ['CREATE','UPDATE']
       input_values:
