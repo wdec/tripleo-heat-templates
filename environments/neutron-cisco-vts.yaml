@@ -88,3 +88,9 @@ parameter_defaults:
     "VIF_TYPE": "vhostuser",
     "VPPCPUS": "1",
     "L2_MODE": "True"}
+
+  PerNodeData: |
+    {"< Node UUID >":
+      {"vtf_underlay_ip_v4": "2.2.2.2",
+       "vtf_underlay_mask_v4": "/24"}
+    }

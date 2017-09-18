@@ -32,10 +32,14 @@ parameters:
     description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
     type: string
     default: "False"
+  PerNodeData:
+    description: Per node config data in json format
+    type: json
+    default: {}
 
 # Install of vpfa_init.sh and dpdk_nic_bind.py is required to carry out the configuration.
 resources:
-  CustomExtraConfigPre:
+  VTSExtraConfigPre:
     type: OS::Heat::SoftwareConfig
     properties:
       group: script
@@ -43,12 +47,15 @@ resources:
       - name: vpp_conf
       config: |
         #!/bin/bash
+        node_id=$(dmidecode --s system-uuid | uniq)
         echo $vpp_conf > /tmp/conf_in
+        echo $node_id >> /tmp/conf_in
         echo $vpp_conf | python -c "
 
         # Start of Python script
 
         import ast
+        import json
         import os
         import subprocess
         import six
@@ -58,19 +65,7 @@ resources:
         VPFA_INIT = 'vpfa_init.sh'
         DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
         UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
-
-        input = sys.stdin.readline() or '{}'
-        input = ast.literal_eval(input)
-        env_params = dict()
-        for i in input:
-          env_params.update(i)
-        vpp_params = env_params.pop('VPP_PARAMS')
-        for k, v in six.iteritems(vpp_params):
-          env_params[k] = v
-        for k, v in six.iteritems(env_params):
-          if isinstance(v, list):
-            v = ','.join(v)
-            env_params[k] = v
+        HIERA_DATA = "/etc/puppet/hieradata/${node_id}.json"
 
         def vpfa_init(env_params):
           # Launch vpfa_init script and config underlay mac
@@ -107,17 +102,43 @@ resources:
             except IOError as e:
               print('VPFA Extra Config underlay mac file error'.format(e))
 
+        def write_node_data(env_params):
+          print('Extracting node specific params for vpfa')
+          node_env = env_params.get('${node_id}', {})
+          with open(HIERA_DATA, 'w') as hierafile:
+            try:
+              json.dump(node_env, hierafile)
+            except IOError as e:
+              print('VPFA Extra Config node data file error'.format(e))
+
+        # Main script
+
+        input = sys.stdin.readline() or '{}'
+        input = ast.literal_eval(input)
+        env_params = dict()
+        for i in input:
+          env_params.update(i)
+        vpp_params = env_params.pop('VPP_PARAMS')
+        for k, v in six.iteritems(vpp_params):
+          env_params[k] = v
+        for k, v in six.iteritems(env_params):
+          if isinstance(v, list):
+            v = ','.join(v)
+            env_params[k] = v
+
         if 'VPFA_INIT' in env_params and env_params['VPFA_INIT'] == 'True':
           vpfa_init(env_params)
         else:
           mac_underlay_init(env_params)
+
+        write_node_data(env_params)
 
         # End of Python script
 
         " > /tmp/vpfa_init_out
 
 
-  CustomExtraDeploymentPre:
+  VTSExtraDeploymentPre:
     type: OS::Heat::SoftwareDeployment
     properties:
       name: Cisco_VPFA_ExtraConfig
@@ -126,6 +147,7 @@ resources:
       actions: ['CREATE','UPDATE']
       input_values:
         vpp_conf:
+            - NODE_DATA: {get_param: PerNodeData}
             - VPP_PARAMS: {get_param: VPPparams}
             - UNDERLAY_IF_NAME: {get_param: UnderlayInterface}
             - BOND_IF_LIST: {get_param: BondIfList }
@@ -135,4 +157,4 @@ resources:
 outputs:
   deploy_stdout:
     description: Deployment reference, used to trigger puppet apply on changes
-    value: {get_attr: [CustomExtraDeploymentPre, deploy_stdout]}
+    value: {get_attr: [VTSExtraDeploymentPre, deploy_stdout]}
