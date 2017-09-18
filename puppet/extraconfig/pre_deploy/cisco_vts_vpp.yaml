@@ -1,6 +1,6 @@
 heat_template_version: 2015-04-30
 
-description: Generate VPP configuration
+description: Generate VTS configuration extras
 
 parameters:
   server:
@@ -15,7 +15,7 @@ parameters:
   VPPparams:
     type: json
     default: ''
-    description: json string containing per-node configuration map
+    description: json string containing configuration map
   UnderlayInterface:
     description: Name of underlay interface or bond mode
     type: string
@@ -103,8 +103,9 @@ resources:
               print('VPFA Extra Config underlay mac file error'.format(e))
 
         def write_node_data(env_params):
-          print('Extracting node specific params for vpfa')
+          print('Extracting node specific data for vpfa')
           node_env = env_params.get('NODE_DATA', {}).get('${node_id}', {})
+          print('Found the following node specifc data: ' + node_env)
           with open(HIERA_DATA, 'w') as hierafile:
             try:
               yaml.safe_dump(node_env, hierafile, default_flow_style=False)
@@ -113,7 +114,7 @@ resources:
 
         # Main script
 
-        print('Cisco VTS Extra Pre Deployment script run.', time.strftime('%c'))
+        print('Cisco VTS Extra Pre Deployment script run ' + time.strftime('%c'))
         input = sys.stdin.readline() or '{}'
         input = ast.literal_eval(input)
         env_params = dict()
