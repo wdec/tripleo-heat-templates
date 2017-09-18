@@ -91,6 +91,6 @@ parameter_defaults:
 
   PerNodeData: |
     {"< Node UUID >":
-      {"vtf_underlay_ip_v4": "2.2.2.2",
-       "vtf_underlay_mask_v4": "/24"}
+      {"vts::vtf_underlay_ip_v4": "2.2.2.2",
+       "vts::vtf_underlay_mask_v4": "/24"}
     }
