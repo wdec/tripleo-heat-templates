@@ -21,16 +21,6 @@ parameters:
     description: Port of the VTS Server
     type: number
     default: 8888
-
-# Temporary till we do them in tripleO
-  VTSNetworkIPv4Address:
-    description: IP address of the VPFA on the underlay
-    type: string
-    default: ''
-  VTSNetworkv4Mask:
-    type: string
-    default: ''
-
   VTSNetworkIPv4Gateway:
     type: string
     default: ''
@@ -82,13 +72,6 @@ parameters:
     default: {}
     type: json
 
-#Uncomment and complete if vpp resource comes to be needed
-#resources:
-
-#  Vpp:
-#    type: ./vpp.yaml
-#    properties:
-
 outputs:
   role_data:
     description: Role Data for the VPFA service.
@@ -96,7 +79,6 @@ outputs:
       service_name: cisco_vpfa
       config_settings:
         map_merge:
-#          - get_attr: [Vpp, role_data, config_settings]
           - vts::vts_ip: {get_param: VTSServer}
             vts::vts_port: {get_param: VTSPort}
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
@@ -108,8 +90,6 @@ outputs:
             cisco_vpfa::underlay_interface: {get_param: UnderlayInterface}
             cisco_vpfa::bond_if_list: {get_param: BondIfList}
             cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
-            #cisco_vpfa::vpfa_ipv4_address: {get_param: VTSNetworkIPv4Address}
-            #cisco_vpfa::vpfa_ipv4_mask: {get_param: VTSNetworkv4Mask}
             cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
 
       step_config: |
