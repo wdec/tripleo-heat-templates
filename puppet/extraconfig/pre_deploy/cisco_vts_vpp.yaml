@@ -55,6 +55,7 @@ resources:
         # Start of Python script
 
         import ast
+        import json
         import os
         import subprocess
         import six
@@ -66,6 +67,7 @@ resources:
         DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
         UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
         HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
+        OS_NET_CONF = '/etc/os-net-config/config.json'
 
         def vpfa_init(env_params):
           # Launch vpfa_init script and config underlay mac
@@ -112,6 +114,26 @@ resources:
             except IOError as e:
               print('VPFA Extra Config node data file error'.format(e))
 
+        def get_os_net_conf(env_params)
+          print('Extracting node vpp interface configuration')
+          config = {}
+          interfaces = {}
+          with open(OS_NET_CONF) as os_net_conf:
+            try:
+              config = json.load(os_net_conf)
+              interfaces = config['network_config']
+            except IOError as e:
+              print('VPFA Extra Config os-net-config file error'.format(e))
+
+          env_params.update({'NODE_DATA' : {'cisco_vpfa::vpp_bonds' : []}})
+          env_params.update({'NODE_DATA' : {'cisco_vpfa::vpp_interfaces' : []}})
+          for i in interfaces:
+            for k, v in six.iteritems(i):
+              if k == 'type' and v == 'vpp_bond':
+                env_params['cisco_vpfa::vpp_bonds'].append(i)
+              if k == 'type' and v == 'vpp_interface':
+                env_params['cisco_vpfa::vpp_interfaces'].append(i)
+
         # Main script
 
         print('Cisco VTS Extra Pre Deployment script run ' + time.strftime('%c'))
@@ -132,6 +154,7 @@ resources:
           vpfa_init(env_params)
         else:
           mac_underlay_init(env_params)
+          get_os_net_conf(env_params)
 
         write_node_data(env_params)
 
