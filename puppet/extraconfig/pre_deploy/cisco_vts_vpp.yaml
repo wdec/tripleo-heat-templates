@@ -57,6 +57,7 @@ resources:
         import ast
         import json
         import os
+        import re
         import subprocess
         import six
         import sys
@@ -105,16 +106,15 @@ resources:
               print('VPFA Extra Config underlay mac file error'.format(e))
 
         def write_node_data(env_params):
-          print('Extracting node specific data for vpfa')
+          print('Extracting node specific data for vpfa and generating hiera file')
           node_env = env_params.get('NODE_DATA', {}).get('${node_id}', {})
-          print('Found the following node specifc data: ' + node_env)
           with open(HIERA_DATA, 'w') as hierafile:
             try:
               yaml.safe_dump(node_env, hierafile, default_flow_style=False)
             except IOError as e:
               print('VPFA Extra Config node data file error'.format(e))
 
-        def get_os_net_conf(env_params)
+        def get_os_net_conf(env_params):
           print('Extracting node vpp interface configuration')
           config = {}
           interfaces = {}
@@ -125,14 +125,18 @@ resources:
             except IOError as e:
               print('VPFA Extra Config os-net-config file error'.format(e))
 
-          env_params.update({'NODE_DATA' : {'cisco_vpfa::vpp_bonds' : []}})
-          env_params.update({'NODE_DATA' : {'cisco_vpfa::vpp_interfaces' : []}})
+          env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::bond_if_list': [] })
+          env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::underlay_interface': [] })
           for i in interfaces:
             for k, v in six.iteritems(i):
               if k == 'type' and v == 'vpp_bond':
-                env_params['cisco_vpfa::vpp_bonds'].append(i)
+                bond_nr = re.sub('[^0-9]','',i['name'])
+                env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append('bond'+bond_nr)
+                for member in i['members']:
+                  # NOTE: This requires a change indexing bonds when supporting multiple bonds
+                  env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'].append(member['name'])
               if k == 'type' and v == 'vpp_interface':
-                env_params['cisco_vpfa::vpp_interfaces'].append(i)
+                env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append(i['name'])
 
         # Main script
 
@@ -149,6 +153,9 @@ resources:
           if isinstance(v, list):
             v = ','.join(v)
             env_params[k] = v
+        # Create empty node_id unless already present
+        if '${node_id}' not in env_params['NODE_DATA']:
+          env_params['NODE_DATA']['${node_id}'] = {}
 
         if 'VPFA_INIT' in env_params and env_params['VPFA_INIT'] == 'True':
           vpfa_init(env_params)

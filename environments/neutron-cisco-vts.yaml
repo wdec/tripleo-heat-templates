@@ -57,11 +57,11 @@ parameter_defaults:
   ###################
 
   #VPFAHostname: 'foo'
-  ComputeHostName: 'foo.com'
   NetworkConfigMethod: 'static'
   NetworkNameServerIP: ''
   VifType: 'vhostuser'
   UnderlayInterface: 'ens224'
+  #BondIfList: ''
   UnderlayIpNewtorksList: '11.0.0.1/24'
   VTSNetworkIPv4Gateway: '10.0.0.1'
 
