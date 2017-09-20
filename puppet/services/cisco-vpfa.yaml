@@ -54,6 +54,10 @@ parameters:
     description: List of other underlay networks reachable through the underlay interface
     type: comma_delimited_list
     default: ''
+  VPFAInit:
+    description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
+    type: string
+    default: "False"
 
   EndpointMap:
     default: {}
@@ -81,14 +85,15 @@ outputs:
         map_merge:
           - vts::vts_ip: {get_param: VTSServer}
             vts::vts_port: {get_param: VTSPort}
+            vts::vpfa_init: {get_param: VPFAInit}
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
             cisco_vpfa::vts_username: {get_param: VTSUsername}
             cisco_vpfa::vts_password: {get_param: VTSPassword}
             cisco_vpfa::vif_type: {get_param: VifType}
             cisco_vpfa::network_config_method: {get_param: NetworkConfigMethod}
             cisco_vpfa::network_nameserver: {get_param: NetworkNameServerIP}
-            cisco_vpfa::underlay_interface: {get_param: UnderlayInterface}
-            cisco_vpfa::bond_if_list: {get_param: BondIfList}
+            vts::underlay_interface: {get_param: UnderlayInterface}
+            vts::bond_if_list: {get_param: BondIfList}
             cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
             cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
 
