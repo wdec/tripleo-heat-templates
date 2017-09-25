@@ -13,20 +13,11 @@ resource_registry:
   OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
 
   # VPFA Configuration
-  OS::TripleO::Services::CiscoVpfaCompute: ../puppet/services/cisco-vpfa-compute.yaml
-  OS::TripleO::Services::CiscoVpfaController: ../puppet/services/cisco-vpfa-controller.yaml
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-  #Additional hook services for controller or all nodes. Enable/disable as needed
+
+  #Additional hook scripts for controller or all nodes. Enable/disable as needed
   #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
-
-  # VPP Module configuration
-  # All nodes
-  #OS::TripleO::Services::Vpp: ../puppet/services/vpp.yaml
-  # Compute
-  OS::TripleO::Services::VppCompute: ../puppet/services/vpp-compute.yaml
-  # Controller
-  #OS::TripleO::Services::VppController: ../puppet/services/vpp-controller.yaml
 
 parameter_defaults:
 
