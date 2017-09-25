@@ -1,0 +1,101 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Cisco VPFA Compute Configuration.
+
+parameters:
+
+  VTSUsername:
+    default: 'admin'
+    description: The username for the VTS server.
+    type: string
+  VTSPassword:
+    default: 'admin'
+    type: string
+    description: The password for the VTS server.
+    hidden: true
+  VTSServer:
+    description: VTS Server IP address
+    type: string
+  VTSPort:
+    description: Port of the VTS Server
+    type: number
+    default: 8888
+  VTSNetworkIPv4Gateway:
+    type: string
+    default: ''
+  # HOSTNAME is set automatically unless defined in environment.
+  VPFAHostname:
+    description: (Optional) Name of the VPFA
+    type: string
+    default: ''
+  NetworkConfigMethod:
+    description: Network configuration method
+    type: string
+    default: 'static'
+  # Network IP address and Netmask need to be assigned via deployment hook
+  NetworkNameServerIP:
+    description: IP address of Name Server
+    type: string
+    default: ''
+  VifTypeController:
+    description: VIF Type
+    type: string
+    default: 'vhostuser'
+  UnderlayInterface:
+    description: Name of underlay interface or bond mode
+    type: string
+    default: ''
+  BondIfList:
+    description: (Optional) List of underlay interfaces to bond
+    type: comma_delimited_list
+    default: ''
+  UnderlayIpNewtorksList:
+    description: List of other underlay networks reachable through the underlay interface
+    type: comma_delimited_list
+    default: ''
+  VPFAInit:
+    description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
+    type: string
+    default: "False"
+
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+outputs:
+  role_data:
+    description: Role Data for the VPFA service.
+    value:
+      service_name: cisco_vpfa
+      config_settings:
+        map_merge:
+          - vts::vts_ip: {get_param: VTSServer}
+            vts::vts_port: {get_param: VTSPort}
+            vts::vpfa_init: {get_param: VPFAInit}
+            cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
+            cisco_vpfa::vts_username: {get_param: VTSUsername}
+            cisco_vpfa::vts_password: {get_param: VTSPassword}
+            cisco_vpfa::vif_type: {get_param: VifTypeController}
+            cisco_vpfa::network_config_method: {get_param: NetworkConfigMethod}
+            cisco_vpfa::network_nameserver: {get_param: NetworkNameServerIP}
+            vts::underlay_interface: {get_param: UnderlayInterface}
+            vts::bond_if_list: {get_param: BondIfList}
+            cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
+            cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
+
+      step_config: |
+        include tripleo::profile::base::cisco_vpfa

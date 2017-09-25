@@ -1,7 +1,7 @@
 heat_template_version: 2016-04-08
 
 description: >
-  Vpp service configured with Puppet
+  Vpp service configured with Puppet for controller role
 
 parameters:
   ServiceNetMap:
@@ -18,11 +18,11 @@ parameters:
     description: Mapping of service endpoint -> protocol. Typically set
                  via parameter_defaults in the resource registry.
     type: json
-  VppCpuMainCore:
+  VppCpuMainCoreCompute:
     default: ''
     description: VPP main thread core pinning.
     type: string
-  VppCpuCorelistWorkers:
+  VppCpuCorelistWorkersController:
     default: ''
     description: List of cores for VPP worker thread pinning
     type: string
@@ -61,8 +61,8 @@ outputs:
       service_name: vpp
       monitoring_subscription: {get_param: MonitoringSubscriptionVpp}
       config_settings:
-        fdio::vpp_cpu_main_core: {get_param: VppCpuMainCore}
-        fdio::vpp_cpu_corelist_workers: {get_param: VppCpuCorelistWorkers}
+        fdio::vpp_cpu_main_core: {get_param: VppCpuMainCoreController}
+        fdio::vpp_cpu_corelist_workers: {get_param: VppCpuCorelistWorkersController}
         fdio::vpp_exec_commands: {get_param: VppExecCommands}
         fdio::vpp_tuntap_enabl: {get_param: VppTunTapEnable}
         fdio::vpp_tuntap_mtu: {get_param: VppTunTapMtu}

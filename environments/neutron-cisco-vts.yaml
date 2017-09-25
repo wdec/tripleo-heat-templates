@@ -2,8 +2,6 @@
 resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
   OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
-  # TODO: we need different configs on compute nodes than controller nodes.
-  # we need to create another service file in puppet directory for compute and link it here.
 
   # We'll add VTS agent when its service is implemented.
   #OS::TripleO::Services::ComputeNeutronOvsAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
@@ -15,33 +13,41 @@ resource_registry:
   OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
 
   # VPFA Configuration
-  OS::TripleO::Services::CiscoVpfa: ../puppet/services/cisco-vpfa.yaml
-
-  # VPP Config generation
-  OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
+  OS::TripleO::Services::CiscoVpfaCompute: ../puppet/services/cisco-vpfa-compute.yaml
+  OS::TripleO::Services::CiscoVpfaController: ../puppet/services/cisco-vpfa-controller.yaml
+  OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+  #Additional hook services for controller or all nodes. Enable/disable as needed
   #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpp.yaml
 
-  # VPP Module Config (mutually exclusive with VPP Config generation above)
-  # OS::TripleO::Services::Vpp: ../puppet/services/vpp.yaml
+  # VPP Module configuration
+  # All nodes
+  #OS::TripleO::Services::Vpp: ../puppet/services/vpp.yaml
+  # Compute
+  OS::TripleO::Services::VppCompute: ../puppet/services/vpp-compute.yaml
+  # Controller
+  OS::TripleO::Services::VppController: ../puppet/services/vpp-controller.yaml
 
 parameter_defaults:
 
-  ###############
-  ### General ###
-  ###############
-  #VTSUsername: 'admin'
-  #VTSPassword: ''
-  #VTSServer: '192.168.0.1'
-  #VTSVMMID: ''
+  ###################
+  ### VTS General ###
+  ###################
+
+  VTSUsername: 'admin'
+  VTSPassword: ''
+  VTSServer: '192.168.0.1'
+  VTSVMMID: ''
 
   ###################
   ### Neutron ML2 ###
   ###################
-  #NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
+
+  NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
   NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
   NeutronTypeDrivers: 'vxlan,vlan,flat'
   NeutronServicePlugins: 'cisco_vts_router,trunk'
+  NeutronInterfaceDriver: 'cisco_controller.drivers.agent.linux.interface.NamespaceDriver'
 
   ########################
   ### VTS Agent Config ###
@@ -57,13 +63,13 @@ parameter_defaults:
   ###################
 
   #VPFAHostname: 'foo'
-  NetworkConfigMethod: 'static'
-  NetworkNameServerIP: ''
-  VifType: 'vhostuser'
-  UnderlayInterface: 'ens224'
-  #BondIfList: ''
+  #NetworkConfigMethod: 'static'
+  #NetworkNameServerIP: ''
+  VifTypeCompute: 'vhostuser'
+  VifTypeController: 'tap'
   UnderlayIpNewtorksList: '11.0.0.1/24'
   VTSNetworkIPv4Gateway: '10.0.0.1'
+
 
   # VPFA Configuration requires the assignment of an underlay IP address for the VPFA per node.
   # This needs to be specified against the UUID of the target node in a JSON data blob.
@@ -82,24 +88,32 @@ parameter_defaults:
   ### VPP Config  ###
   ###################
 
-  # Flag to control generation of VPFA config. Set to "False" if using the OSPD VPP Module.
+  VppTunTapEnable: true
+
+  #VppCpuMainCoreController: '0'
+  #VppCpuCorelistWorkersCompute: ''
+  #VppCpuMainCoreCompute: '0'
+  #VppCpuCorelistWorkersCompute: ''
+
+  # Flag to control generation of VPP config. Set to "False" if using the OSPD VPP Module and os-net-config.
   VPFAInit: "False"
 
+  # If above flag is set to True, the following parameters MUST be passed.
+  #UnderlayInterface: 'ens224'
+  #BondIfList: ''
+
   # When VPFAInit is set to true, the following VPP parameters need to be provided by means
-  # of a json data blob e.g:
-  #      parameter_defaults:
-  #        VPPparams: |
-  #          {"ENABLE_VPP_WORKERS": True,
-  #           "PCI_DRIVER": "vfio_pci"}
-  VPPparams: |
-    {"RECONFIGURE": "False",
-    "ENABLE_VPP_WORKERS": "False",
-    "ENABLE_JUMBO_FRAMES": "True",
-    "ENABLE_LLDP": "True",
-    "MAX_MTU_SIZE": "9000",
-    "HEADERS_FOR_VPP": "64",
-    "PCI_DRIVER": "uio_pci_generic",
-    "HOSTCPUS": "2",
-    "VIF_TYPE": "vhostuser",
-    "VPPCPUS": "1",
-    "L2_MODE": "True"}
+  # of a json data e.g:
+  #
+  #VPPparams: |
+  #  {"RECONFIGURE": "False",
+  #  "ENABLE_VPP_WORKERS": "False",
+  #  "ENABLE_JUMBO_FRAMES": "True",
+  #  "ENABLE_LLDP": "True",
+  #  "MAX_MTU_SIZE": "9000",
+  #  "HEADERS_FOR_VPP": "64",
+  #  "PCI_DRIVER": "uio_pci_generic",
+  #  "HOSTCPUS": "2",
+  #  "VIF_TYPE": "vhostuser",
+  #  "VPPCPUS": "1",
+  #  "L2_MODE": "True"}
