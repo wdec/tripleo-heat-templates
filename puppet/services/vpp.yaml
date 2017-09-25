@@ -44,11 +44,11 @@ parameters:
   VppTunTapMtu:
     default: ''
     description: VPP tuntap interface MTU
-    type: number
+    type: string
   VppTapCliMtu:
     default: ''
     description: VPP tapcli interface MTU
-    type: number
+    type: string
   VppVhostUserDontDumpMem:
     default: false
     description: Avoids dumping vhost-user shared memory segments to core files.
@@ -64,7 +64,7 @@ outputs:
         fdio::vpp_cpu_main_core: {get_param: VppCpuMainCore}
         fdio::vpp_cpu_corelist_workers: {get_param: VppCpuCorelistWorkers}
         fdio::vpp_exec_commands: {get_param: VppExecCommands}
-        fdio::vpp_tuntap_enabl: {get_param: VppTunTapEnable}
+        fdio::vpp_tuntap_enable: {get_param: VppTunTapEnable}
         fdio::vpp_tuntap_mtu: {get_param: VppTunTapMtu}
         fdio::vpp_tapcli_mtu: {get_param: VppTapCliMtu}
         fdio::vpp_vhostuser_dont_dump_memory: {get_param: VppVhostUserDontDumpMem}

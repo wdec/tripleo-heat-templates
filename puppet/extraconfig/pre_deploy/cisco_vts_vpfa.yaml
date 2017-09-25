@@ -14,8 +14,8 @@ parameters:
   #           "PCI_DRIVER": "vfio_pci"}
   VPPparams:
     type: json
-    default: ''
-    description: json string containing configuration map
+    default: {}
+    description: json object containing VPP configuration map for VPFA Init script
   UnderlayInterface:
     description: Name of underlay interface or bond mode
     type: string
@@ -148,9 +148,10 @@ resources:
         env_params = dict()
         for i in input:
           env_params.update(i)
-        vpp_params = env_params.pop('VPP_PARAMS')
-        for k, v in six.iteritems(vpp_params):
-          env_params[k] = v
+        vpp_params = env_params.pop('VPP_PARAMS', {})
+        if isinstance(vpp_params, dict):
+          for k, v in six.iteritems(vpp_params):
+            env_params[k] = v
         for k, v in six.iteritems(env_params):
           if isinstance(v, list):
             v = ','.join(v)
