@@ -38,7 +38,7 @@ parameters:
     description: IP address of Name Server
     type: string
     default: ''
-  VifType:
+  VifTypeCompute:
     description: VIF Type
     type: string
     default: 'vhostuser'
@@ -89,7 +89,7 @@ outputs:
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
             cisco_vpfa::vts_username: {get_param: VTSUsername}
             cisco_vpfa::vts_password: {get_param: VTSPassword}
-            cisco_vpfa::vif_type: {get_param: VifType}
+            cisco_vpfa::vif_type: {get_param: VifTypeCompute}
             cisco_vpfa::network_config_method: {get_param: NetworkConfigMethod}
             cisco_vpfa::network_nameserver: {get_param: NetworkNameServerIP}
             vts::underlay_interface: {get_param: UnderlayInterface}

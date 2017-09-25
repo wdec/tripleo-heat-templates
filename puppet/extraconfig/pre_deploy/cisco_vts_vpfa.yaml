@@ -53,6 +53,7 @@ resources:
         echo $vpp_conf | python -c "
 
         # Start of Python script
+        # Note: Script relies on bash variable substitution for node_id
 
         import ast
         import json
@@ -64,7 +65,7 @@ resources:
         import yaml
         import time
 
-        VPFA_INIT = 'vpfa_init.sh'
+        VPFA_INIT = '/etc/vpe/vpfa/vpfa_init.sh'
         DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
         UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
         HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
@@ -77,8 +78,9 @@ resources:
           output, error = sproc.communicate()
           print('VPFA_INIT OUTPUT: {0}  ERROR: {1}'.format(output, error))
 
-        def mac_underlay_init(env_params):
-        # Assuming VPP configured by native module. Config only underlay mac address
+        def mac_underlay_init(env_params, underlay_intf):
+          # Assuming VPP configured by os-net-config module. Config only underlay mac address file.
+
           print('Configuring underlay mac address for vpfa')
           data = []
           with open(DPDK_MAP) as f:
@@ -88,14 +90,14 @@ resources:
               print(exc)
 
           for interface in data:
-            if 'name' in interface and interface['name'] == env_params['UNDERLAY_IF_NAME']:
+            if 'name' in interface and interface['name'] == underlay_intf:
               underlay_mac = interface['mac_address']
               print('CustomVPFA Extra Config found underlay MAC address: {0}'
                     ' for interface: {1}'.format(underlay_mac, interface['name']))
               break
           else:
             print('CustomVPFA Extra Config unable to '
-                  'find dpdk_map MAC address for: {0}'.format(env_params['UNDERLAY_IF_NAME']))
+                  'find dpdk_map MAC address for: {0}'.format(underlay_intf))
             return
             
           with open(UNDERLAY_IF_FILE, 'w') as umac_file:
@@ -160,8 +162,16 @@ resources:
         if 'VPFA_INIT' in env_params and env_params['VPFA_INIT'] == 'True':
           vpfa_init(env_params)
         else:
-          mac_underlay_init(env_params)
           get_os_net_conf(env_params)
+          #The u_interface is taken to be the first one from the cisco_vpfa::underlay_interface
+          #In case of bonding, the u_interface is taken to be the first one from the cisco_vpfa::bond_if_list
+
+          underlay_intf = ''
+          if 'NODE_DATA' in env_params and '${node_id}' in env_params['NODE_DATA']:
+            underlay_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'][0]
+          if 'bond' in underlay_intf:
+            underlay_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'][0]
+          mac_underlay_init(env_params, underlay_intf)
 
         write_node_data(env_params)
 
