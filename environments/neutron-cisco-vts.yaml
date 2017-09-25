@@ -69,6 +69,7 @@ parameter_defaults:
   VifTypeController: 'tap'
   UnderlayIpNewtorksList: '11.0.0.1/24'
   VTSNetworkIPv4Gateway: '10.0.0.1'
+  VTSRIpAddressList: '10.0.0.1'
 
 
   # VPFA Configuration requires the assignment of an underlay IP address for the VPFA per node.
@@ -81,7 +82,7 @@ parameter_defaults:
   PerNodeData: |
     {"< Node UUID >":
       {"vts::vtf_underlay_ip_v4": "10.0.0.2",
-       "vts::vtf_underlay_mask_v4": "/24"}
+       "vts::vtf_underlay_mask_v4": "24"}
     }
 
   ###################
