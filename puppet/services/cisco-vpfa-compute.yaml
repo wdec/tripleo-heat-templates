@@ -58,6 +58,10 @@ parameters:
     description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
     type: string
     default: "False"
+  VTSRIpAddressList:
+    description: List of VTSR IP addresses on the underlay
+    type: comma_delimited_list
+    default: ''
 
   EndpointMap:
     default: {}
@@ -96,6 +100,7 @@ outputs:
             vts::bond_if_list: {get_param: BondIfList}
             cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
             cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
+            cisco_vpfa::vtsr_ip_address_list: {get_param: VTSRIpAddressList}
 
       step_config: |
         include tripleo::profile::base::cisco_vpfa
