@@ -49,7 +49,6 @@ resources:
         #!/bin/bash
         node_id=$(dmidecode --s system-uuid | uniq)
         echo $vpp_conf > /tmp/conf_in
-        echo $node_id >> /tmp/conf_in
         echo $vpp_conf | python -c "
 
         # Start of Python script
@@ -69,6 +68,7 @@ resources:
         DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
         UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
         HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
+        HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.yaml'
         OS_NET_CONF = '/etc/os-net-config/config.json'
 
         def vpfa_init(env_params):
@@ -116,38 +116,74 @@ resources:
             except IOError as e:
               print('VPFA Extra Config node data file error'.format(e))
 
-        def get_os_net_conf(env_params):
-          print('Extracting node vpp interface configuration')
-          config = {}
-          interfaces = {}
+        def get_interfaces():
+          target_interfaces = []
           with open(OS_NET_CONF) as os_net_conf:
             try:
               config = json.load(os_net_conf)
               interfaces = config['network_config']
             except IOError as e:
               print('VPFA Extra Config os-net-config file error'.format(e))
+          for i in interfaces:
+            for k, v in six.iteritems(i):
+              if k == 'type' and v in ['vpp_bond', 'vpp_interface']:
+                target_interfaces.append(i)
+          return target_interfaces
 
+        def update_with_os_net_conf(env_params, interfaces = []):
+          print('Extracting node vpp interface configuration')
+          config = {}
           env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::bond_if_list': [] })
           env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::underlay_interface': [] })
           for i in interfaces:
-            for k, v in six.iteritems(i):
-              if k == 'type' and v == 'vpp_bond':
-                bond_nr = re.sub('[^0-9]','',i['name'])
-                env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append('bond'+bond_nr)
+            if i['type'] == 'vpp_bond':
+              bond_nr = re.sub('[^0-9]','',i['name'])
+              env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append('bond'+bond_nr)
+              for member in i['members']:
+                # NOTE: This requires a change indexing bonds when supporting multiple bonds
+                env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'].append(member['name'])
+            if i['type'] == 'vpp_interface':
+              env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append(i['name'])
+          return env_params
+
+        def update_with_lldp(env_params, interfaces = []):
+          with open(HIERA_SERVICE_CONFIG, 'r') as hiera_service_c:
+            try:
+              config = yaml.load(hiera_service_c)
+            except IOError as e:
+              print('VPFA Extra Config os-net-config file error'.format(e))
+          if 'vts::lldp_enable' in config and config['vts::lldp_enable'] == True:
+            print('Adding VPP LLDP config')
+            # Add LLDP enable command parametrized with %fact
+            env_params['NODE_DATA']['${node_id}'].update({'fdio::vpp_exec_commands':
+                      ['set lldp system-name %{::hostname} tx-hold 4 tx-interval 30'] })
+
+            index_hack = 2
+            for i in interfaces:
+              if i['type'] == 'vpp_bond':
                 for member in i['members']:
-                  # NOTE: This requires a change indexing bonds when supporting multiple bonds
-                  env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'].append(member['name'])
-              if k == 'type' and v == 'vpp_interface':
-                env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append(i['name'])
+                  env_params['NODE_DATA']['${node_id}']['fdio::vpp_exec_commands'].append(
+                    'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + member['name'])
+                  index_hack += 1
+                # NOTE: This requires a change when supporting multiple bonds
+                break
+                #return env_params
+              if i['type'] == 'vpp_interface':
+                env_params['NODE_DATA']['${node_id}']['fdio::vpp_exec_commands'].append(
+                  'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + member['name'])
+                index_hack += 1
+          return env_params
 
         # Main script
 
         print('Cisco VTS Extra Pre Deployment script run ' + time.strftime('%c'))
+
         input = sys.stdin.readline() or '{}'
         input = ast.literal_eval(input)
         env_params = dict()
         for i in input:
           env_params.update(i)
+
         vpp_params = env_params.pop('VPP_PARAMS', {})
         if isinstance(vpp_params, dict):
           for k, v in six.iteritems(vpp_params):
@@ -156,23 +192,29 @@ resources:
           if isinstance(v, list):
             v = ','.join(v)
             env_params[k] = v
-        # Create empty node_id unless already present
+
+        # Create empty per-node data unless already present
         if '${node_id}' not in env_params['NODE_DATA']:
           env_params['NODE_DATA']['${node_id}'] = {}
 
         if 'VPFA_INIT' in env_params and env_params['VPFA_INIT'] == 'True':
+          # VPP config will be done by vpfa_init script
           vpfa_init(env_params)
         else:
-          get_os_net_conf(env_params)
-          #The u_interface is taken to be the first one from the cisco_vpfa::underlay_interface
-          #In case of bonding, the u_interface is taken to be the first one from the cisco_vpfa::bond_if_list
+          # VPP Config will be done by puppet. Need to add few pieces of data from os_net_conf first.
+          vpp_interfaces = get_interfaces()
+          env_params = update_with_os_net_conf(env_params, vpp_interfaces)
 
+          # The u_interface is taken to be the first one from the cisco_vpfa::underlay_interface
+          # or the the cisco_vpfa::bond_if_list in case of bonding
           underlay_intf = ''
           if 'NODE_DATA' in env_params and '${node_id}' in env_params['NODE_DATA']:
             underlay_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'][0]
           if 'bond' in underlay_intf:
             underlay_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'][0]
+
           mac_underlay_init(env_params, underlay_intf)
+          env_params = update_with_lldp(env_params, vpp_interfaces)
 
         write_node_data(env_params)
 
