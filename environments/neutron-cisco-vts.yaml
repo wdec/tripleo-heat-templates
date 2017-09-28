@@ -71,22 +71,28 @@ parameter_defaults:
   # 2. 'openstack baremetal introspection data save <Openstack ID from step1> | jq .extra.system.product.uuid
   # 3. Note the Node UUID and use it in the json configuration blob below. Multiple nodes can be specified.
   PerNodeData: |
-    {"< Node UUID >":
-      {"vts::vtf_underlay_ip_v4": "10.0.0.2",
-       "vts::vtf_underlay_mask_v4": "24"}
+    {
+      "< Node1 UUID >": {
+          "vts::vtf_underlay_ip_v4": "10.0.0.2",
+          "vts::vtf_underlay_mask_v4": "24" },
+      "< Node2 UUID >": {
+          "vts::vtf_underlay_ip_v4": "10.0.0.3",
+          "vts::vtf_underlay_mask_v4": "24" }
     }
 
   ###################
   ### VPP Config  ###
   ###################
 
-  VppTunTapEnable: true
+  #The CPUs listed below need to be part of the grub isol CPU list (configured elsewhere)
 
   #VppCpuMainCoreController: '0'
-  #VppCpuCorelistWorkersCompute: ''
+  #VppCpuCorelistWorkersController: ''
   #VppCpuMainCoreCompute: '0'
   #VppCpuCorelistWorkersCompute: ''
 
+
+  ### Special VPP Config - Not intended for general use ###
   # Flag to control generation of VPP config. Set to "False" if using the OSPD VPP Module and os-net-config.
   VPFAInit: "False"
 
