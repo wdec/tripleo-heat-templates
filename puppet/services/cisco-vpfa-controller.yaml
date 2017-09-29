@@ -56,12 +56,16 @@ parameters:
     default: ''
   VPFAInit:
     description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
-    type: string
-    default: "False"
+    type: boolean
+    default: false
   VTSRIpAddressList:
     description: List of VTSR IP addresses on the underlay
     type: comma_delimited_list
     default: ''
+  VTSLldpEnable:
+    default: true
+    description: Enable LLDP on vpp interfaces
+    type: boolean
 
   EndpointMap:
     default: {}
@@ -101,6 +105,7 @@ outputs:
             cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
             cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
             cisco_vpfa::vtsr_ip_address_list: {get_param: VTSRIpAddressList}
+            vts::lldp_enable: {get_param: VTSLldpEnable}
 
       step_config: |
         include tripleo::profile::base::cisco_vpfa
