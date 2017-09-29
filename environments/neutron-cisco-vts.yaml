@@ -3,9 +3,9 @@ resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
   OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
 
-  # We'll add VTS agent when its service is implemented.
+  # Add VTS agent service as necessary.
   #OS::TripleO::Services::ComputeNeutronOvsAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
-  #or this OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
+  OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
 
   # Disabling Neutron services that overlap with VTS
   OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
@@ -44,10 +44,10 @@ parameter_defaults:
   ### VTS Agent Config ###
   ########################
 
-  #VTSTimeout:
   VTSPhysicalNet: ''
-  VTSRetries: 5
-  VTSPollingInterval: 120
+  #VTSRetries: 15
+  #VTSTimeout:
+  #VTSPollingInterval: 6
 
   ###################
   ### VPFA Config ###

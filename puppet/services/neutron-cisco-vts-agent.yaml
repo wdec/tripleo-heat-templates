@@ -1,7 +1,9 @@
 heat_template_version: 2016-04-08
 
 description: >
-  OpenStack Neutron Cisco VTS agent configured with Puppet
+  OpenStack Neutron Cisco VTS OVS agent configured with Puppet
+  The VTS OVS agent shares parameters with the Cisco VTS ML2 plugin
+  and is assumed to co-exist.
 
 parameters:
   ServiceNetMap:
@@ -51,7 +53,7 @@ parameters:
     type: number
     default: 6
 
-  # Remained is default for OSV agent
+  # Remaning parameters are the same as for OVS agent
 
     NeutronEnableL2Pop:
       type: string
@@ -153,6 +155,16 @@ outputs:
             # internal_api_subnet - > IP/CIDR
             neutron::agents::ml2::ovs::local_ip: {get_param: [ServiceNetMap, NeutronTenantNetwork]}
             neutron::agents::ml2::ovs::firewall_driver: {get_param: NeutronOVSFirewallDriver}
+            #vts::vts_ip: {get_param: VTSServer}
+            #vts::vts_port: {get_param: VTSPort}
+            #neutron::plugins::ml2::cisco::vts::vts_username: {get_param: VTSUsername}
+            #neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
+            #neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
+            #neutron::plugins::ml2::cisco::vts::vts_timeout: {get_param: VTSTimeout}
+            neutron::agents::ml2::cisco_vts_agent::vts_phys_net: {get_param: VTSPhysicalNet}
+            neutron::agents::ml2::cisco_vts_agent::vts_agent_retries: {get_param: VTSRetries}
+            neutron::agents::ml2::cisco_vts_agent::vts_agent_polling_interval: {get_param: VTSPollingInterval}
+
             tripleo.neutron_ovs_agent.firewall_rules:
               '118 neutron vxlan networks':
                 proto: 'udp'
