@@ -29,6 +29,7 @@ parameters:
   VTSServer:
     description: VTS Server IP address
     type: string
+    default: ''
   VTSVMMID:
     description: VMM ID used on VTS
     type: string
@@ -53,60 +54,61 @@ parameters:
     type: number
     default: 6
 
-  # Remaning parameters are the same as for OVS agent
-
-    NeutronEnableL2Pop:
-      type: string
-      description: >
-          Enable/disable the L2 population feature in the Neutron agents.
-      default: "False"
-    NeutronBridgeMappings:
-      description: >
-        The OVS logical->physical bridge mappings to use. See the Neutron
-        documentation for details. Defaults to mapping br-ex - the external
-        bridge on hosts - to a physical name 'datacentre' which can be used
-        to create provider networks (and we use this for the default floating
-        network) - if changing this either use different post-install network
-        scripts or be sure to keep 'datacentre' as a mapping network name.
-      type: comma_delimited_list
-      default: "datacentre:br-ex"
-    NeutronTunnelTypes:
-      default: 'vxlan'
-      description: |
-          The tunnel types for the Neutron tenant network.
-      type: comma_delimited_list
-    NeutronAgentExtensions:
-      default: "qos"
-      description: |
-          Comma-separated list of extensions enabled for the Neutron agents.
-      type: comma_delimited_list
-    NeutronEnableDVR:
-      default: False
-      description: |
-        Enable support for distributed routing in the OVS Agent.
-      type: boolean
-    NeutronEnableARPResponder:
-      default: false
-      description: |
-        Enable ARP responder feature in the OVS Agent.
-      type: boolean
-    MonitoringSubscriptionNeutronOvs:
-      default: 'overcloud-neutron-ovs-agent'
-      type: string
-    NeutronOVSFirewallDriver:
-      default: ''
-      description: |
-        Configure the classname of the firewall driver to use for implementing
-        security groups. Possible values depend on system configuration. Some
-        examples are: noop, openvswitch, iptables_hybrid. The default value of an
-        empty string will result in a default supported configuration.
-      type: string
-    NeutronOpenVswitchAgentLoggingSource:
-      type: json
-      default:
-        tag: openstack.neutron.agent.openvswitch
-        path: /var/log/neutron/openvswitch-agent.log
-
+  # Remaining parameters are the same as for the regular OVS agent
+  DefaultPasswords:
+    default: {}
+    type: json
+  NeutronEnableL2Pop:
+    type: string
+    description: >
+        Enable/disable the L2 population feature in the Neutron agents.
+    default: "False"
+  NeutronBridgeMappings:
+    description: >
+      The OVS logical->physical bridge mappings to use. See the Neutron
+      documentation for details. Defaults to mapping br-ex - the external
+      bridge on hosts - to a physical name 'datacentre' which can be used
+      to create provider networks (and we use this for the default floating
+      network) - if changing this either use different post-install network
+      scripts or be sure to keep 'datacentre' as a mapping network name.
+    type: comma_delimited_list
+    default: "datacentre:br-ex"
+  NeutronTunnelTypes:
+    default: 'vxlan'
+    description: |
+        The tunnel types for the Neutron tenant network.
+    type: comma_delimited_list
+  NeutronAgentExtensions:
+    default: "qos"
+    description: |
+        Comma-separated list of extensions enabled for the Neutron agents.
+    type: comma_delimited_list
+  NeutronEnableDVR:
+    default: False
+    description: |
+      Enable support for distributed routing in the OVS Agent.
+    type: boolean
+  NeutronEnableARPResponder:
+    default: false
+    description: |
+      Enable ARP responder feature in the OVS Agent.
+    type: boolean
+  MonitoringSubscriptionNeutronOvs:
+    default: 'overcloud-neutron-ovs-agent'
+    type: string
+  NeutronOVSFirewallDriver:
+    default: ''
+    description: |
+      Configure the classname of the firewall driver to use for implementing
+      security groups. Possible values depend on system configuration. Some
+      examples are: noop, openvswitch, iptables_hybrid. The default value of an
+      empty string will result in a default supported configuration.
+    type: string
+  NeutronOpenVswitchAgentLoggingSource:
+    type: json
+    default:
+      tag: openstack.neutron.agent.openvswitch
+      path: /var/log/neutron/openvswitch-agent.log
 
 resources:
 
@@ -165,7 +167,7 @@ outputs:
             neutron::agents::ml2::cisco_vts_agent::vts_agent_retries: {get_param: VTSRetries}
             neutron::agents::ml2::cisco_vts_agent::vts_agent_polling_interval: {get_param: VTSPollingInterval}
 
-            tripleo.neutron_ovs_agent.firewall_rules:
+            tripleo.neutron_cisco_vts_agent.firewall_rules:
               '118 neutron vxlan networks':
                 proto: 'udp'
                 dport: 4789

@@ -240,8 +240,8 @@ resource_registry:
   OS::TripleO::Services::Vpp: OS::Heat::None
   OS::TripleO::Services::VppCompute: puppet/services/vpp-compute.yaml
   OS::TripleO::Services::VppController: puppet/services/vpp-controller.yaml
-  OS::TripleO::Services::VpfaCompute: puppet/services/cisco-vpfa-compute.yaml
-  OS::TripleO::Services::VpfaController: puppet/services/cisco-vpfa-controller.yaml
+  OS::TripleO::Services::CiscoVpfaCompute: puppet/services/cisco-vpfa-compute.yaml
+  OS::TripleO::Services::CiscoVpfaController: puppet/services/cisco-vpfa-controller.yaml
   # End file
 
 parameter_defaults:
