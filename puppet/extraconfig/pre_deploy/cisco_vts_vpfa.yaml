@@ -192,7 +192,7 @@ resources:
                 #return env_params
               if i['type'] == 'vpp_interface':
                 env_params['NODE_DATA']['${node_id}']['fdio::vpp_exec_commands'].append(
-                  'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + member['name'])
+                  'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + i['name'])
                 index_hack += 1
           return env_params
 

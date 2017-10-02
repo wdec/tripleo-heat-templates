@@ -106,6 +106,14 @@ outputs:
             cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
             cisco_vpfa::vtsr_ip_address_list: {get_param: VTSRIpAddressList}
             vts::lldp_enable: {get_param: VTSLldpEnable}
+            tripleo.cisco_vpfa.firewall_rules:
+              '255 cisco vpfa':
+                dport:
+                  - 21345
+                  - 55555
+                source: {get_param: VTSRIpAddressList}
+                proto: tcp
+                action: accept
 
       step_config: |
         include tripleo::profile::base::cisco_vpfa
