@@ -1,21 +1,24 @@
 # A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
+
+# By default optional items are commented out
+
 resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
   OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
 
-  # Add VTS agent service as necessary.
+  ## Add VTS agent service as necessary.
   #OS::TripleO::Services::ComputeNeutronOvsAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
   #OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
 
-  # Disabling Neutron services that overlap with VTS
+  ## Disable Neutron services that overlap with VTS
   OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
 
-  # VPFA Configuration
+  ## VPFA Configuration
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
-  #Additional hook scripts for controller or all nodes. Enable/disable as needed
+  ## Additional hook scripts for controller or all nodes. Enable/disable as needed
   #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
@@ -53,14 +56,16 @@ parameter_defaults:
   ### VPFA Config ###
   ###################
 
+  UnderlayIpNewtorksList: '11.0.0.1/24'
+  VTSRIpAddressList: '10.0.0.1'
   #VPFAHostname: 'foo'
   #NetworkConfigMethod: 'static'
   #NetworkNameServerIP: ''
-  VifTypeCompute: 'vhostuser'
-  VifTypeController: 'tap'
-  UnderlayIpNewtorksList: '11.0.0.1/24'
-  VTSNetworkIPv4Gateway: '10.0.0.1'
-  VTSRIpAddressList: '10.0.0.1'
+  #VifTypeCompute: 'vhostuser'
+  #VifTypeController: 'tap'
+
+  # Set common VTS Network Gateway address or set/override it in PerNodeData
+  #VTSNetworkIPv4Gateway: '10.0.0.1'
 
 
   # VPFA Configuration requires the assignment of an underlay IP address for the VPFA per node.
@@ -70,14 +75,19 @@ parameter_defaults:
   # 1. 'ironic node-list'. Note Openstack ID of the target node
   # 2. 'openstack baremetal introspection data save <Openstack ID from step1> | jq .extra.system.product.uuid
   # 3. Note the Node UUID and use it in the json configuration blob below. Multiple nodes can be specified.
+  #
+  # The per-node data can be used to set/override any of the cisco_vpfa:: module configuration parameters
+  #
   PerNodeData: |
     {
       "< Node1 UUID >": {
           "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.2",
-          "cisco_vpfa::vtf_underlay_mask_v4": "24" },
+          "cisco_vpfa::vtf_underlay_mask_v4": "24",
+          "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"},
       "< Node2 UUID >": {
           "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.3",
-          "cisco_vpfa::vtf_underlay_mask_v4": "24" }
+          "cisco_vpfa::vtf_underlay_mask_v4": "24",
+          "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"}
     }
 
   ###################
@@ -91,8 +101,10 @@ parameter_defaults:
   #VppCpuMainCoreCompute: '0'
   #VppCpuCorelistWorkersCompute: ''
 
-
+  #########################################################
   ### Special VPP Config - Not intended for general use ###
+  #########################################################
+
   # Flag to control generation of VPP config. Set to "False" if using the OSPD VPP Module and os-net-config.
   VPFAInit: "False"
 
