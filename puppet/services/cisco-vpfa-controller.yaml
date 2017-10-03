@@ -41,7 +41,7 @@ parameters:
   VifTypeController:
     description: VIF Type
     type: string
-    default: 'vhostuser'
+    default: 'tap'
   UnderlayInterface:
     description: Name of underlay interface or bond mode
     type: string

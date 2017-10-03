@@ -73,11 +73,11 @@ parameter_defaults:
   PerNodeData: |
     {
       "< Node1 UUID >": {
-          "vts::vtf_underlay_ip_v4": "10.0.0.2",
-          "vts::vtf_underlay_mask_v4": "24" },
+          "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.2",
+          "cisco_vpfa::vtf_underlay_mask_v4": "24" },
       "< Node2 UUID >": {
-          "vts::vtf_underlay_ip_v4": "10.0.0.3",
-          "vts::vtf_underlay_mask_v4": "24" }
+          "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.3",
+          "cisco_vpfa::vtf_underlay_mask_v4": "24" }
     }
 
   ###################
