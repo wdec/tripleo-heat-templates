@@ -6,21 +6,21 @@ resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
   OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
 
-  ## Add VTS agent service as necessary.
-  #OS::TripleO::Services::ComputeNeutronOvsAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
-  #OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
-
-  ## Disable Neutron services that overlap with VTS
-  OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
+  ## OVS and VTS Agent section
+  # Disable OVS Agent for compute and controller
   OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
-  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+  OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
+
+  ## Add VTS agent service. NOTE: VTS agent and OVS agent are mutually exclusive
+  #OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
 
   ## VPFA Configuration
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-
-  ## Additional hook scripts for controller or all nodes. Enable/disable as needed
+  # Additional hook scripts for controller or all nodes. Enable/disable as needed
   #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+  # Disable Neutron L3 agent that conflict with VPFA
+  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
 
 parameter_defaults:
 
