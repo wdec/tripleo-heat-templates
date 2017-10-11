@@ -1,0 +1,65 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Rsyslog client service configuration.
+
+parameters:
+
+  SyslogServer:
+    description: The syslog server.
+    default: ''
+    type: string
+  SyslogPort:
+    description: The syslog server port.
+    default: '514'
+    type: string
+  LogRemote:
+    description: Log Remotely
+    type: boolean
+    default: false
+  LogLocal:
+    description: Log Locally
+    type: boolean
+    default: false
+  RemoteType:
+    description: Which protocol to use when logging remotely. Valid values: tcp, udp, repl
+    type: string
+    default: 'tcp'
+  Pattern:
+    description: Sets the pattern to match logs
+    type: string
+    default: '*.*'
+
+
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+outputs:
+  role_data:
+    description: Role Data for the rsyslog client.
+    value:
+      service_name: rsyslog_client
+      config_settings:
+        map_merge:
+          - rsyslog::server: {get_param: SyslogServer}
+            rsyslog::port: {get_param: SyslogPort}
+            rsyslog::log_remote: {get_param: LogRemote}
+            rsyslog::remote_type: {get_param: RemoteType}
+            rsyslog::pattern: {get_param: Pattern}
+
+      step_config: |
+        include rsyslog::client
