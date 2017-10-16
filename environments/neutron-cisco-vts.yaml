@@ -101,6 +101,14 @@ parameter_defaults:
   #VppCpuMainCoreCompute: '0'
   #VppCpuCorelistWorkersCompute: ''
 
+  #####################################
+  ### rSyslog Client Configuration  ###
+  #####################################
+
+  #SyslogServer: ''
+  #RemoteForwardFormat: ''
+  #ClientLogFilters: ''
+
   #########################################################
   ### Special VPP Config - Not intended for general use ###
   #########################################################
