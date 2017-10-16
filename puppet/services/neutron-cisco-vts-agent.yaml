@@ -45,6 +45,7 @@ parameters:
   VTSPhysicalNet:
     description: Name of physical network
     type: string
+    default: ''
   VTSRetries:
     description: Max number of retries when connecting to VTS
     type: number

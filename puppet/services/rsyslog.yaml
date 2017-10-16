@@ -6,12 +6,17 @@ description: >
 parameters:
 
   SyslogServer:
-    description: The syslog server.
+    description: The syslog server host name or IP.
     default: ''
     type: string
-  SyslogPort:
+  ServerPort:
     description: The syslog server port.
     default: '514'
+    type: string
+  RemoteForwardFormat:
+    description: |
+      Which forward format for remote servers should be used.
+    default: ''
     type: string
   LogRemote:
     description: Log Remotely
@@ -22,14 +27,38 @@ parameters:
     type: boolean
     default: false
   RemoteType:
-    description: Which protocol to use when logging remotely. Valid values: tcp, udp, repl
+    description: Which protocol to use when logging remotely. Valid values; tcp, udp, repl
     type: string
     default: 'tcp'
-  Pattern:
-    description: Sets the pattern to match logs
+  ClientLogFilters:
+    description: |
+      An array of hash items defining custom logging filters using the `if/then` configurations parameter.
+      E.g.  [ expression: '$programname == "foo"', action: /var/log/foo.log]
+    type: comma_delimited_list
+    default: |
+      []
+  RemoteServers:
+    description: |
+      String containing remote server puppet configuration hashes. See https://github.com/saz/puppet-rsyslog for format
+      E.g.
+       [
+          {
+            host => 'logs.example.org',
+          },
+          {
+            port => '55514',
+      },
+      {
+            host     => 'logs.somewhere.com',
+            port     => '555',
+            pattern  => '*.log',
+            protocol => 'tcp',
+            format   => 'RFC3164fmt',
+          },
+      ],
     type: string
-    default: '*.*'
-
+    default: |
+      ''
 
   EndpointMap:
     default: {}
@@ -55,11 +84,14 @@ outputs:
       service_name: rsyslog_client
       config_settings:
         map_merge:
-          - rsyslog::server: {get_param: SyslogServer}
-            rsyslog::port: {get_param: SyslogPort}
-            rsyslog::log_remote: {get_param: LogRemote}
-            rsyslog::remote_type: {get_param: RemoteType}
-            rsyslog::pattern: {get_param: Pattern}
+          - rsyslog::client::server: {get_param: SyslogServer}
+            rsyslog::client::port: {get_param: ServerPort}
+            rsyslog::client::remote_forward_format: {get_param: RemoteForwardFormat}
+            rsyslog::client::log_remote: {get_param: LogRemote}
+            rsyslog::client::log_local: {get_param: LogLocal}
+            rsyslog::client::remote_type: {get_param: RemoteType}
+            rsyslog::client::log_filters: {get_param: ClientLogFilters }
+            rsyslog::client::remote_servers: {get_param: RemoteServers}
 
       step_config: |
         include rsyslog::client
