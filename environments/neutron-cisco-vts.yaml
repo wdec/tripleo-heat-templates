@@ -30,6 +30,9 @@ resource_registry:
   # Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
+  ## Rsyslog client
+  OS::TripleO::RSyslogClient: ../puppet/services/rsyslog-client.yaml
+
 
 parameter_defaults:
 
@@ -115,6 +118,7 @@ parameter_defaults:
   #####################################
   ### rSyslog Client Configuration  ###
   #####################################
+  # NOTE: Add OS::TripleO::RSyslogClient to the role data catalogue for the service to come into effect
 
   #SyslogServer: ''
   #RemoteForwardFormat: ''
