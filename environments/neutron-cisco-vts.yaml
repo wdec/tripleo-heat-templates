@@ -1,26 +1,35 @@
 # A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
 
-# By default optional items are commented out
+# By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
 resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+
+  #Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
   OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
 
+  # Disable Neutron L3 agent that conflict with VPFA
+  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+
   ## OVS and VTS Agent section
-  # Disable OVS Agent for compute and controller
+
+  # Disable/enable the default OVS Agent for compute and controller
   OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
 
-  ## Add VTS agent service. NOTE: VTS agent and OVS agent are mutually exclusive
+  ## Disable/enable VTS agent service. VTS agent and OVS agent are mutually exclusive
+  # NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
   #OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
 
-  ## VPFA Configuration
+  ## VPFA Configuration Hook scripts
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-  # Additional hook scripts for controller or all nodes. Enable/disable as needed
-  #OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  # Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
+  OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  # Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-  # Disable Neutron L3 agent that conflict with VPFA
-  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+
 
 parameter_defaults:
 
@@ -41,7 +50,9 @@ parameter_defaults:
   NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
   NeutronTypeDrivers: 'vxlan,vlan,flat'
   NeutronServicePlugins: 'cisco_vts_router,trunk'
-  NeutronInterfaceDriver: 'cisco_controller.drivers.agent.linux.interface.NamespaceDriver'
+
+  ## DHCP Agent interface driver. Uncomment ONLY if/when deploying VPP on the controller node(s).
+  #NeutronInterfaceDriver: 'cisco_controller.drivers.agent.linux.interface.NamespaceDriver'
 
   ########################
   ### VTS Agent Config ###
@@ -64,7 +75,7 @@ parameter_defaults:
   #VifTypeCompute: 'vhostuser'
   #VifTypeController: 'tap'
 
-  # Set common VTS Network Gateway address or set/override it in PerNodeData
+  # Set common VTS Network Gateway address or set/override it in PerNodeData below
   #VTSNetworkIPv4Gateway: '10.0.0.1'
 
 
