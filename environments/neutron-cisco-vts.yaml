@@ -120,6 +120,22 @@ parameter_defaults:
   #####################################
   # NOTE: Add OS::TripleO::RSyslogClient to the role data catalogue for the service to come into effect
 
+  # Use the RemoteServers JSON parameter for configuring remote servers. The JSON data is meant to be an array of
+  # dicts (hashes), with each array item corresponding to a server. RemoteServers overrides SyslogServer
+  # See https://github.com/saz/puppet-rsyslog for list of supported dict(hash) keys.
+  # Eg:
+  #    [
+  #      {"host" : "logs.example.org",
+  #      "port" : "55514",
+  #      "pattern" : "*.log"}
+  #    ]
+
+  #RemoteServers: |
+  #  [
+  #    {}
+  #  ]
+
+  # Config options for single simple server and client filters.
   #SyslogServer: ''
   #RemoteForwardFormat: ''
   #ClientLogFilters: ''

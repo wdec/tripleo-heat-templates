@@ -36,6 +36,11 @@ parameters:
       E.g.  expression: '$programname == "foo"', action: /var/log/foo.log
     type: comma_delimited_list
     default: |
+  RemoteServers:
+    description: |
+      A JSON data element containing one or more remote server logging configuration. Overrides SyslogServer if used.
+    default: {}
+    type: json
 
   EndpointMap:
     default: {}
@@ -67,7 +72,8 @@ outputs:
             rsyslog::client::log_remote: {get_param: LogRemote}
             rsyslog::client::log_local: {get_param: LogLocal}
             rsyslog::client::remote_type: {get_param: RemoteType}
-            rsyslog::client::log_filters: {get_param: ClientLogFilters }
+            rsyslog::client::log_filters: {get_param: ClientLogFilters}
+            rsyslog::client::remote_servers: {get_param: RemoteServers}
 
       step_config: |
         include rsyslog::client
