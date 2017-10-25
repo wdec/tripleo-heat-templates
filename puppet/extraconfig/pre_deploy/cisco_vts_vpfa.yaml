@@ -95,6 +95,8 @@ resources:
         OS_NET_CONF = '/etc/os-net-config/config.json'
         LLDP_CONF='/etc/vpe/lldp/lldp.conf'
 
+        dpdk_data = []
+
         def vpfa_init(env_params):
           # Launch vpfa_init script and config underlay mac
           print('Launching VPFA Init shell script')
@@ -102,18 +104,19 @@ resources:
           output, error = sproc.communicate()
           print('VPFA_INIT OUTPUT: {0}  ERROR: {1}'.format(output, error))
 
-        def mac_underlay_init(env_params, underlay_intf):
-          # Assuming VPP configured by os-net-config module. Config only underlay mac address file.
-
-          print('Configuring underlay mac address for vpfa')
-          data = []
-          with open(DPDK_MAP) as f:
+        def load_dpdk_data(file):
+          global dpdk_data
+          with open(file) as f:
             try:
-              data = yaml.load(f)
+              dpdk_data = yaml.load(f)
             except yaml.YAMLError as exc:
               print(exc)
 
-          for interface in data:
+        def mac_underlay_init(env_params, underlay_intf):
+          # Assuming VPP configured by os-net-config module. Configure only underlay mac address file.
+
+          print('Configuring underlay mac address for vpfa')
+          for interface in dpdk_data:
             if 'name' in interface and interface['name'] == underlay_intf:
               underlay_mac = interface['mac_address']
               print('CustomVPFA Extra Config found underlay MAC address: {0}'
@@ -141,6 +144,8 @@ resources:
               print('VPFA Extra Config node data file error: {}'.format(str(e)))
 
         def get_interfaces():
+          # Get VPP interface data from Os Net config, combine it with DPDK map info and sort based on PCI address
+          print('Getting and augementing VPP interface data')
           target_interfaces = []
           with open(OS_NET_CONF) as os_net_conf:
             try:
@@ -149,12 +154,22 @@ resources:
             except IOError as e:
               print('VPFA Extra Config os-net-config file error: {}'.format(str(e)))
           for i in interfaces:
-            if i['type'] in ['vpp_bond', 'vpp_interface']:
+            if i.get('type') in ['vpp_bond', 'vpp_interface']:
               target_interfaces.append(i)
 
+          # This adds the pci_address key to the simple vpp_interfaces
+          target_interfaces = merge_lists(target_interfaces, dpdk_data, 'name')
+          target_interfaces = sorted(target_interfaces, key=lambda x: x.get('pci_address'))
+
+          # This adds the pci_address key to the simple vpp_bond interfaces and sorts
+          for i in target_interfaces:
+            if i['type'] == 'vpp_bond':
+              _ = merge_lists(i['members'], dpdk_data, 'name')
+              i['members'] = sorted(_, key=lambda x: x.get('pci_address'))
+          #print('Target VPP Interfaces SORTED', target_interfaces)
           return target_interfaces
 
-        def update_with_os_net_conf(env_params, interfaces = []):
+        def update_with_intf_names(env_params, interfaces = []):
           print('Extracting node vpp interface configuration')
           config = {}
           env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::bond_if_list': [] })
@@ -196,6 +211,8 @@ resources:
               print('Will use facter\'s default IP for LLDP management IP addresses.')
 
             index_hack = 2
+
+
             for i in interfaces:
               if i['type'] == 'vpp_bond':
                 for member in i['members']:
@@ -212,6 +229,20 @@ resources:
                 index_hack += 1
 
           return env_params
+
+        def merge_lists(l1, l2, key):
+          # Returns dict list l1 with additional data from dict list l2 only for shared keys, if any.
+          kvals_l2 = [x.get(key) for x in l2]
+          merged = {}
+          for item in l1:
+            merged[item[key]] = item
+            if item[key] not in kvals_l2:
+              continue
+            for item2 in l2:
+              if item[key] == item2[key]:
+                merged[item[key]].update(item2)
+          return [val for (_, val) in merged.items()]
+
 
         #### Main script
         print('\n*****************************************')
@@ -243,8 +274,9 @@ resources:
           vpfa_init(env_params)
         else:
           # VPP Config will be done by puppet. Need to add some config from os_net_conf data however.
+          load_dpdk_data(DPDK_MAP)
           vpp_interfaces = get_interfaces()
-          env_params = update_with_os_net_conf(env_params, vpp_interfaces)
+          env_params = update_with_intf_names(env_params, vpp_interfaces)
 
           # The u_interface is taken to be the first one from the cisco_vpfa::underlay_interface
           # or the the cisco_vpfa::bond_if_list in case of bonding
