@@ -123,7 +123,7 @@ parameter_defaults:
   # Use the RemoteServers JSON parameter for configuring remote servers. The JSON data is meant to be an array of
   # dicts (hashes), with each array item corresponding to a server. RemoteServers overrides SyslogServer
   # See https://github.com/saz/puppet-rsyslog for list of supported dict(hash) keys.
-  # Eg:
+  # Eg: RemoteServers: |
   #    [
   #      {"host" : "logs.example.org",
   #      "port" : "55514",
@@ -135,10 +135,35 @@ parameter_defaults:
   #    {}
   #  ]
 
-  # Config options for single simple server and client filters.
+  # Config options for single simple server, client filters and imfiles.
+
+
+
   #SyslogServer: ''
   #RemoteForwardFormat: ''
   #ClientLogFilters: ''
+
+  # Imfiles configuration JSON data. See https://github.com/saz/puppet-rsyslog for list of parameters
+  # Eg: ImFiles: |
+  #[
+  #      {"file_name" : "/var/log/*",
+  #      "file_tag" : "my_tag",
+  #      "file_facility" : "myfacility"}
+  #    ]
+
+  #ImFiles: |
+  #  [
+  #    {}
+  #  ]
+
+  #The LogTemplates JSON data parameter can be used to set up custom logging templates, which can be used for local
+  and/or
+  #remote logging. More detail on template formats can be found in the [rsyslog documentation]
+  #(http://www.rsyslog.com/doc/rsyslog_conf_templates.html
+  #LogTemplates: |
+  #  [
+  #    {}
+  #  ]
 
   #########################################################
   ### Special VPP Config - Not intended for general use ###

@@ -41,6 +41,16 @@ parameters:
       A JSON data element containing one or more remote server logging configuration. Overrides SyslogServer if used.
     default: {}
     type: json
+  ImFiles:
+    description: |
+      A JSON data element containing a list of imfile hashes, and their settings
+    default: {}
+    type: json
+  LogTemplates:
+    description: |
+      A JSON data element containing a list of log template hashes, and their settings
+    default: {}
+    type: json
 
   EndpointMap:
     default: {}
@@ -74,6 +84,8 @@ outputs:
             rsyslog::client::remote_type: {get_param: RemoteType}
             rsyslog::client::log_filters: {get_param: ClientLogFilters}
             rsyslog::client::remote_servers: {get_param: RemoteServers}
+            rsyslog::client::imfiles: {get_param: ImFiles}
+            rsyslog::client::log_templates: {get_param: LogTemplates}
 
       step_config: |
         include rsyslog::client
