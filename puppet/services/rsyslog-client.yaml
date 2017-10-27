@@ -32,21 +32,22 @@ parameters:
     default: 'tcp'
   ClientLogFilters:
     description: |
-      An array of hash items defining custom logging filters using the `if/then` configurations parameter.
-      E.g.  expression: '$programname == "foo"', action: /var/log/foo.log
-    type: comma_delimited_list
-    default: |
+      An JSON array of hash items defining custom logging filters using the `if/then` configurations parameter.
+      E.g.  [{"expression": "$programname == \"foo\"", "action": "/var/log/foo.log"}]
+    type: json
+    default: []
   RemoteServers:
     description: |
-      A JSON data element containing one or more remote server logging configuration. Overrides SyslogServer if used.
+      A JSON data element containing an array of hashes for remote server logging configuration. Overrides
+      SyslogServer if used.
     default: {}
     type: json
   ImFiles:
     description: |
-      A JSON data element containing a list of imfile hashes, and their settings
+      A JSON data element containing a hash of imfile hashes, and their settings
     default: {}
     type: json
-  LogTemplates:
+  ClientLogTemplates:
     description: |
       A JSON data element containing a list of log template hashes, and their settings
     default: {}
@@ -85,7 +86,7 @@ outputs:
             rsyslog::client::log_filters: {get_param: ClientLogFilters}
             rsyslog::client::remote_servers: {get_param: RemoteServers}
             rsyslog::client::imfiles: {get_param: ImFiles}
-            rsyslog::client::log_templates: {get_param: LogTemplates}
+            rsyslog::client::log_templates: {get_param: ClientLogTemplates}
 
       step_config: |
         include rsyslog::client
