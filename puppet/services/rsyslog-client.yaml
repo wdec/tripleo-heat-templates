@@ -52,6 +52,20 @@ parameters:
       A JSON data element containing a list of log template hashes, and their settings
     default: {}
     type: json
+  LogLocal:
+    description: |
+      Enable local logging
+    default: true
+    type: boolean
+  ClientSnippet:
+    description: JSON blob encapuslating a custom client config snippet. (Unchecked)
+    default: |
+      {"custom_config":
+        {
+          "content": ""
+        }
+      }
+    type: json
 
   EndpointMap:
     default: {}
@@ -87,6 +101,17 @@ outputs:
             rsyslog::client::remote_servers: {get_param: RemoteServers}
             rsyslog::client::imfiles: {get_param: ImFiles}
             rsyslog::client::log_templates: {get_param: ClientLogTemplates}
+            rsyslog::client::log_local: {get_param: LogLocal}
 
-      step_config: |
-        include rsyslog::client
+      step_config:
+        str_replace:
+          template: |
+            include rsyslog::client
+
+            rsyslog::snippet { 'custom_config':
+              ensure => present,
+              content => 'SNIPPET',
+            }
+          params:
+            SNIPPET: {get_param: [ClientSnippet, custom_config, content]}
+
