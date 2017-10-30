@@ -177,6 +177,7 @@ parameter_defaults:
       }
     ]
 
+
   # Use the RemoteServers JSON parameter for configuring remote servers. The JSON data is meant to be an array of
   # dicts (hashes), with each array item corresponding to a server. RemoteServers overrides SyslogServer
   # See https://github.com/saz/puppet-rsyslog for list of supported dict(hash) keys.
@@ -209,10 +210,17 @@ parameter_defaults:
   #The LogTemplates JSON data parameter can be used to set up custom logging templates, which can be used for local
   #and/or remote logging. More detail on template formats can be found in the [rsyslog documentation]
   #(http://www.rsyslog.com/doc/rsyslog_conf_templates.html
-  #LogTemplates: |
+  #ClientLogTemplates: |
   #  [
   #    {}
   #  ]
+
+  #ClientSnippet: |
+  #  {
+  #    "cisco_vpfa": {
+  #      "content": "abdcef"
+  #      }
+  #  }
 
   #########################################################
   ### Special VPP Config - Not intended for general use ###
