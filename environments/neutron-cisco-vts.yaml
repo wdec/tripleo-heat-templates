@@ -118,50 +118,45 @@ parameter_defaults:
   #####################################
   ### rSyslog Client Configuration  ###
   #####################################
-  # NOTE: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service to come into effect
 
-  # ****** EDIT THE SYSLOG SERVER IP ADDRESS AND PORT IN ClientLogFilters! *******
+  # IMPORTANT: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service to come into effect
+
+  # ****** EDIT THE SYSLOG SERVER IP ADDRESS AND PORT IN ClientLogFilters and add/remove entries as needed! *******
+  # The default template below uses UDP (@) servers on port 514. To add a TCP server, add an extra stanza prefixing
+  # with @@ the server's IP address
 
   ClientLogFilters: |
     [
       {
         "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'crit'",
-        "action": "@@[19.0.128.2]:514;forwardFormat"
+        "action": "@[192.168.128.2]:514;forwardFormat"
       },
       {
         "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'err'",
-        "action": "@@[19.0.128.2]:514;forwardFormat"
+        "action": "@[192.168.128.2]:514;forwardFormat"
       },
       {
         "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'warning'",
-        "action": "@@[19.0.128.2]:514;forwardFormat"
-      },
-      {
-        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'crit'",
-        "action": "@[19.0.128.1]:514;forwardFormat"
-      },
-      {
-        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'err'",
-        "action": "@[19.0.128.1]:514;forwardFormat"
+        "action": "@[192.168.128.2]:514;forwardFormat"
       }
     ]
 
   # Cisco VPFA default log and priority settings
   ImFiles: |
    {
-    "error": {
+    "10-vpfa_error_log": {
       "file_name": "/var/log/vpfa/vpfa_server_errors.log",
       "file_tag": "vpfa",
       "file_severity": "err",
       "file_facility": "local3"
       },
-    "warning": {
+    "10-vpfa_warning_log": {
       "file_name": "/var/log/vpfa/vpfa_server_warning.log",
       "file_tag": "vpfa",
       "file_severity": "warning",
       "file_facility": "local3"
       },
-     "critical": {
+     "10-vpfa_critical_log": {
       "file_name": "/var/log/vpfa/vpfa_server_critical.log",
       "file_tag": "vpfa",
       "file_severity": "critical",
