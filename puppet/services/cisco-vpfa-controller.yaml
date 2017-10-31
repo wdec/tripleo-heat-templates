@@ -58,7 +58,7 @@ parameters:
     description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
     type: boolean
     default: false
-  VTSRIpAddressList:
+  VTSR_u_IpAddressList:
     description: List of VTSR IP addresses on the underlay
     type: comma_delimited_list
     default: ''
@@ -104,14 +104,14 @@ outputs:
             vts::bond_if_list: {get_param: BondIfList}
             cisco_vpfa::underlay_ip_net_list: {get_param: UnderlayIpNewtorksList}
             cisco_vpfa::network_ipv4_gateway: {get_param: VTSNetworkIPv4Gateway}
-            cisco_vpfa::vtsr_ip_address_list: {get_param: VTSRIpAddressList}
+            cisco_vpfa::vtsr_ip_address_list: {get_param: VTSR_u_IpAddressList}
             vts::lldp_enable: {get_param: VTSLldpEnable}
             tripleo.cisco_vpfa.firewall_rules:
               '255 cisco vpfa':
                 dport:
                   - 21345
                   - 55555
-                source: {get_param: VTSRIpAddressList}
+                source: {get_param: VTSR_u_IpAddressList}
                 proto: tcp
                 action: accept
 

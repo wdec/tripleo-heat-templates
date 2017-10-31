@@ -25,7 +25,7 @@ parameters:
   LogLocal:
     description: Log Locally
     type: boolean
-    default: false
+    default: true
   RemoteType:
     description: Which protocol to use when logging remotely. Valid values; tcp, udp, repl
     type: string
@@ -40,16 +40,38 @@ parameters:
     description: |
       A JSON data element containing an array of hashes for remote server logging configuration. Overrides
       SyslogServer if used.
+      Use the RemoteServers JSON parameter for configuring remote servers. The JSON data is meant to be an array of
+      dicts (hashes), with each array item corresponding to a server. RemoteServers overrides SyslogServer
+      See https://github.com/saz/puppet-rsyslog for list of supported dict(hash) keys.
+      E.g.
+      #  [
+      #    {
+      #     "host" : "logs.example.org",
+      #     "port" : "55514",
+      #     "pattern" : "*.log"
+      #    }
+      #  ]
     default: {}
     type: json
   ImFiles:
     description: |
       A JSON data element containing a hash of imfile hashes, and their settings
+      Imfiles configuration JSON data. See https://github.com/saz/puppet-rsyslog for list of parameters
+      E.g.
+      # [
+      #   {
+      #     "file_name" : "/var/log/*",
+      #     "file_tag" : "my_tag",
+      #     "file_facility" : "myfacility"
+      #   }
+      # ]
     default: {}
     type: json
   ClientLogTemplates:
     description: |
-      A JSON data element containing a list of log template hashes, and their settings
+      The LogTemplates JSON data parameter can be used to set up custom logging templates, which can be used for local
+      and/or remote logging. More detail on template formats can be found in the [rsyslog documentation]
+      (http://www.rsyslog.com/doc/rsyslog_conf_templates.html
     default: {}
     type: json
   LogLocal:
@@ -58,13 +80,15 @@ parameters:
     default: true
     type: boolean
   ClientSnippet:
-    description: JSON blob encapuslating a custom client config snippet. (Unchecked)
-    default: |
-      {"custom_config":
-        {
-          "content": ""
-        }
-      }
+    description: |
+      JSON blob encapuslating a custom client config snippet. (Unchecked)
+      #{
+      #  "custom_config":
+      #  {
+      #    "content": ""
+      #  }
+      #}
+    default: {}
     type: json
 
   EndpointMap:
