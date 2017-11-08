@@ -212,13 +212,18 @@ resources:
 
             index_hack = 2
 
+            LLDP_MGMT_STRING = ''
+            if lldp_mngmnt_ipv4:
+              LLDP_MGMT_STRING += ' mgmt-ip4 ' + lldp_mngmnt_ipv4
+            if lldp_mngmnt_ipv6:
+              LLDP_MGMT_STRING += ' mgmt-ip6 ' + lldp_mngmnt_ipv6
 
             for i in interfaces:
               if i['type'] == 'vpp_bond':
                 for member in i['members']:
                   env_params['NODE_DATA']['${node_id}']['fdio::vpp_exec_commands'].append(
-                    'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + member['name'] + ' '
-                    + lldp_mngmnt_ipv4 + ' ' + lldp_mngmnt_ipv6)
+                    'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + member['name']
+                    + LLDP_MGMT_STRING)
                   index_hack += 1
                 # NOTE: This requires a change when supporting multiple bonds
                 break
