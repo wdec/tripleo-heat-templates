@@ -24,8 +24,8 @@ parameters:
     type: string
   VppCpuCorelistWorkersController:
     default: ''
-    description: List of cores for VPP worker thread pinning
-    type: string
+    description: Comma separated list of cores for VPP worker thread pinning
+    type: comma_delimited_list
   MonitoringSubscriptionVpp:
     default: 'overcloud-vpp'
     type: string
@@ -33,10 +33,6 @@ parameters:
     default: ''
     description: Comma delimited list of VPP exec/CLI commands to run on startup
     type: comma_delimited_list
-  VppCpuWorkersList:
-    default: ''
-    description: Comma separated list of cores for VPP worker thread pinning in
-    type: string
   VppTunTapEnable:
     default: True
     description: Enable VPP tuntap driver
