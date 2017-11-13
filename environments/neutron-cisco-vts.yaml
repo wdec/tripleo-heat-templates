@@ -5,29 +5,29 @@
 resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
-  #Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
+  ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
   OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
 
-  # Disable Neutron L3 agent that conflict with VPFA
+  ## Disable Neutron L3 agent that conflict with VPFA
   OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
 
-  ## OVS and VTS Agent section
+  ## OVS and VTS Agent sub-section ##
 
-  # Disable/enable the default OVS Agent for compute and controller
+  ## Disable/enable the default OVS Agent for compute and controller
   OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
 
   ## Disable/enable VTS agent service. VTS agent and OVS agent are mutually exclusive
-  # NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
+  ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
   #OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
 
   ## VPFA Configuration Hook scripts
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
-  # Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
+  ## Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
   OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
-  # Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
+  ## Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
   ## Rsyslog client
@@ -42,7 +42,7 @@ parameter_defaults:
 
   VTSUsername: 'admin'
   VTSPassword: ''
-  VTSServer: '192.168.0.1'
+  VTSServer: ''
   VTSVMMID: ''
 
   ###################
@@ -92,6 +92,7 @@ parameter_defaults:
   #
   # The per-node data can be used to set/override any of the cisco_vpfa:: module configuration parameters
   #
+
   PerNodeData: |
     {
       "< Node1 UUID >": {
@@ -104,20 +105,28 @@ parameter_defaults:
           "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"}
     }
 
-  ###################
-  ### VPP Config  ###
-  ###################
+  #####################################
+  ### VPP Configuration Parameters  ###
+  #####################################
 
-  #The CPUs listed below need to be part of the grub isol CPU list (configured elsewhere)
+  ## MTU for Tun/tap interfaces
+  #VppTunTapMtu: '9000'
 
+  ##The CPUs listed below need to be part of the grub isol CPU list (configured elsewhere)
   #VppCpuMainCoreController: '0'
-  #VppCpuCorelistWorkersController: ''
   #VppCpuMainCoreCompute: '0'
-  #VppCpuCorelistWorkersCompute: ''
 
-  #####################################
-  ### rSyslog Client Configuration  ###
-  #####################################
+  ## Comma delimited workers list
+  #VppCpuCorelistWorkersCompute: ''
+  #VppCpuCorelistWorkersController: ''
+
+  ## Avoid dumping vhost-user shared memory segments to core files
+  #VppVhostUserDontDumpMem: True
+
+
+  ##########################################
+  ### VPFA rSyslog Client Configuration  ###
+  ##########################################
 
   # IMPORTANT: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service to come into effect
 
@@ -129,15 +138,19 @@ parameter_defaults:
     [
       {
         "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'crit'",
-        "action": "@[192.168.128.2]:514;forwardFormat"
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
       },
       {
         "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'err'",
-        "action": "@[192.168.128.2]:514;forwardFormat"
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
       },
       {
         "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'warning'",
-        "action": "@[192.168.128.2]:514;forwardFormat"
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'info'",
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
       }
     ]
 
@@ -161,6 +174,12 @@ parameter_defaults:
       "file_tag": "vpfa",
       "file_severity": "critical",
       "file_facility": "local3"
+      },
+     "10-vpfa_info_log": {
+      "file_name": "/var/log/vpfa/vpfa_server.log",
+      "file_tag": "vpfa",
+      "file_severity": "info",
+      "file_facility": "local3"
       }
     }
   ClientLogTemplates: |
@@ -170,30 +189,3 @@ parameter_defaults:
         "template": "<%PRI%>%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag:1:32%%msg:::sp-if-no-1st-sp%%msg%"
       }
     ]
-
-  #########################################################
-  ### Special VPP Config - Not intended for general use ###
-  #########################################################
-
-  # Flag to control generation of VPP config. Set to "False" if using the OSPD VPP Module and os-net-config.
-  VPFAInit: "False"
-
-  # If above flag is set to True, the following parameters MUST be passed.
-  #UnderlayInterface: 'ens224'
-  #BondIfList: ''
-
-  # When VPFAInit is set to true, the following VPP parameters need to be provided by means
-  # of a json data e.g:
-  #
-  #VPPparams: |
-  #  {"RECONFIGURE": "False",
-  #  "ENABLE_VPP_WORKERS": "False",
-  #  "ENABLE_JUMBO_FRAMES": "True",
-  #  "ENABLE_LLDP": "True",
-  #  "MAX_MTU_SIZE": "9000",
-  #  "HEADERS_FOR_VPP": "64",
-  #  "PCI_DRIVER": "uio_pci_generic",
-  #  "HOSTCPUS": "2",
-  #  "VIF_TYPE": "vhostuser",
-  #  "VPPCPUS": "1",
-  #  "L2_MODE": "True"}
