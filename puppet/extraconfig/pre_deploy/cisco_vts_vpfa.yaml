@@ -70,6 +70,7 @@ resources:
       config: |
         #!/bin/bash
         node_id=$(dmidecode --s system-uuid | uniq)
+        # Comment out the redirect line when running the script locally
         echo $vpp_conf > /tmp/conf_in
         echo $vpp_conf | python -c "
 
@@ -93,9 +94,11 @@ resources:
         HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
         HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.yaml'
         OS_NET_CONF = '/etc/os-net-config/config.json'
-        LLDP_CONF='/etc/vpe/lldp/lldp.conf'
+        LLDP_CONF = '/etc/vpe/lldp/lldp.conf'
 
         dpdk_data = []
+        underlay_mac_intf = ''
+
 
         def vpfa_init(env_params):
           # Launch vpfa_init script and config underlay mac
@@ -103,6 +106,7 @@ resources:
           sproc = subprocess.Popen(VPFA_INIT.split(), env=dict(os.environ, **env_params))
           output, error = sproc.communicate()
           print('VPFA_INIT OUTPUT: {0}  ERROR: {1}'.format(output, error))
+
 
         def load_dpdk_data(file):
           global dpdk_data
@@ -112,10 +116,15 @@ resources:
             except yaml.YAMLError as exc:
               print(exc)
 
+
         def mac_underlay_init(env_params, underlay_intf):
           # Assuming VPP configured by os-net-config module. Configure only underlay mac address file.
 
           print('Configuring underlay mac address for vpfa')
+          if not underlay_intf:
+            print('ERROR: VPFA MAC identifying underlay interface was not determined')
+            raise ValueError('ERROR: VPFA MAC identifying underlay interface was not determined')
+
           for interface in dpdk_data:
             if 'name' in interface and interface['name'] == underlay_intf:
               underlay_mac = interface['mac_address']
@@ -126,7 +135,7 @@ resources:
             print('CustomVPFA Extra Config unable to '
                   'find dpdk_map MAC address for: {0}'.format(underlay_intf))
             return
-            
+
           with open(UNDERLAY_IF_FILE, 'w') as umac_file:
             try:
               umac_file.write(underlay_mac)
@@ -134,19 +143,28 @@ resources:
             except IOError as e:
               print('VPFA Extra Config underlay mac file error: {}'.format(str(e)))
 
+
         def write_node_data(env_params):
-          print('Extracting node specific data for vpfa and generating hiera file')
+          print('Extracting node specific data for vpfa and generating hiera file: {}'.format(str(HIERA_DATA)))
           node_env = env_params.get('NODE_DATA', {}).get('${node_id}', {})
           with open(HIERA_DATA, 'w') as hierafile:
             try:
               yaml.safe_dump(node_env, hierafile, default_flow_style=False)
             except IOError as e:
-              print('VPFA Extra Config node data file error: {}'.format(str(e)))
+              print('VPFA Extra Config hiera node data file error: {}'.format(str(e)))
+
 
         def get_interfaces():
           # Get VPP interface data from Os Net config, combine it with DPDK map info and sort based on PCI address
+          # The u_interface is taken to be the first one from the *configured* (unsorted) list order of bonded interfaces to
+          # accomodate for the active-standby monding mode expressed in the configuration
+          # For simple interfaces, it is the first one from the *sorted* list
+          # NOTE: This requires a change indexing bonds when supporting multiple bonds
+
           print('Getting and augementing VPP interface data')
+          global underlay_mac_intf
           target_interfaces = []
+
           with open(OS_NET_CONF) as os_net_conf:
             try:
               config = json.load(os_net_conf)
@@ -164,20 +182,23 @@ resources:
           # This adds the pci_address key to the simple vpp_bond interfaces and sorts
           for i in target_interfaces:
             if i['type'] == 'vpp_bond':
+              if not underlay_mac_intf:
+                underlay_mac_intf = i['members'][0].get('name')
               _ = merge_lists(i['members'], dpdk_data, 'name')
               i['members'] = sorted(_, key=lambda x: x.get('pci_address'))
-          #print('Target VPP Interfaces SORTED', target_interfaces)
+          # print('Target VPP Interfaces SORTED', target_interfaces)
           return target_interfaces
 
-        def update_with_intf_names(env_params, interfaces = []):
+
+        def update_with_intf_names(env_params, interfaces=[]):
           print('Extracting node vpp interface configuration')
           config = {}
-          env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::bond_if_list': [] })
-          env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::underlay_interface': [] })
+          env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::bond_if_list': []})
+          env_params['NODE_DATA']['${node_id}'].update({'cisco_vpfa::underlay_interface': []})
           for i in interfaces:
             if i['type'] == 'vpp_bond':
-              bond_nr = re.sub('[^0-9]','',i['name'])
-              env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append('bond'+bond_nr)
+              bond_nr = re.sub('[^0-9]', '', i['name'])
+              env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append('bond' + bond_nr)
               for member in i['members']:
                 # NOTE: This requires a change indexing bonds when supporting multiple bonds
                 env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'].append(member['name'])
@@ -185,7 +206,7 @@ resources:
               env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'].append(i['name'])
           return env_params
 
-        def update_with_lldp(env_params, interfaces = []):
+        def update_with_lldp(env_params, interfaces=[]):
           # First Check if LLDP is meant to be configured
           with open(HIERA_SERVICE_CONFIG, 'r') as hiera_service_c:
             try:
@@ -196,19 +217,19 @@ resources:
             print('Adding VPP LLDP config')
             # Add VPP LLDP enable command parametrized with puppet %fqdn fact
             env_params['NODE_DATA']['${node_id}'].update({'fdio::vpp_exec_commands':
-                      ['set lldp system-name %{::fqdn} tx-hold 4 tx-interval 30'] })
+                                               ['set lldp system-name %{::fqdn} tx-hold 4 tx-interval 30']})
 
             # Get the same IPv4 and IPv6 management addresses as used in the system LLDPD config
             lldp_mngmnt_ipv4 = '%{::ipaddress}'
-            lldp_mngmnt_ipv6 = '%{::ipaddress6}'
+            lldp_mngmnt_ipv6 = ''
             parser = SafeConfigParser()
             parser.read(LLDP_CONF)
             try:
               lldp_mngmnt_ipv4 = parser.get('DEFAULT', 'MGMT_IP4_ADDR')
               lldp_mngmnt_ipv6 = parser.get('DEFAULT', 'MGMT_IP6_ADDR')
             except (NoOptionError, NoSectionError) as e:
-              print('WARNING: Couldn\'t obtain VTS LLDP management IP configuration: {}'.format(str(e)))
-              print('Will use facter\'s default IP for LLDP management IP addresses.')
+              print('WARNING: Couldn\'t obtain VTS LLDP management IP configuration: {} ...'.format(str(e)))
+              print('... Setting Puppet facter\'s default IP as LLDP management IP address.')
 
             index_hack = 2
 
@@ -227,13 +248,14 @@ resources:
                   index_hack += 1
                 # NOTE: This requires a change when supporting multiple bonds
                 break
-                #return env_params
+                # return env_params
               if i['type'] == 'vpp_interface':
                 env_params['NODE_DATA']['${node_id}']['fdio::vpp_exec_commands'].append(
                   'set interface lldp sw_if_index ' + str(index_hack) + ' port-desc vtf:' + i['name'])
                 index_hack += 1
 
           return env_params
+
 
         def merge_lists(l1, l2, key):
           # Returns dict list l1 with additional data from dict list l2 only for shared keys, if any.
@@ -280,18 +302,15 @@ resources:
         else:
           # VPP Config will be done by puppet. Need to add some config from os_net_conf data however.
           load_dpdk_data(DPDK_MAP)
+          # Return list of vpp interfaces sorted based on PCI address and identify lead underlay MAC
           vpp_interfaces = get_interfaces()
+          # Return environment parameters to be used for configuring hiera
           env_params = update_with_intf_names(env_params, vpp_interfaces)
 
-          # The u_interface is taken to be the first one from the cisco_vpfa::underlay_interface
-          # or the the cisco_vpfa::bond_if_list in case of bonding
-          underlay_intf = ''
-          if 'NODE_DATA' in env_params and '${node_id}' in env_params['NODE_DATA']:
-            underlay_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'][0]
-          if 'bond' in underlay_intf:
-            underlay_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::bond_if_list'][0]
-
-          mac_underlay_init(env_params, underlay_intf)
+          # If the underlay MAC interface was not picked from the bond, then select it here
+          if not underlay_mac_intf:
+            underlay_mac_intf = env_params['NODE_DATA']['${node_id}']['cisco_vpfa::underlay_interface'][0]
+          mac_underlay_init(env_params, underlay_mac_intf)
           env_params = update_with_lldp(env_params, vpp_interfaces)
 
         write_node_data(env_params)
