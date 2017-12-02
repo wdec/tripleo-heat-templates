@@ -10,6 +10,9 @@ resource_registry:
   OS::TripleO::Tasks::ControllerPrePuppet: ../../extraconfig/tasks/pre_puppet_pacemaker.yaml
   OS::TripleO::Tasks::ControllerPostPuppet: ../../extraconfig/tasks/post_puppet_pacemaker.yaml
   OS::TripleO::Tasks::ControllerPostPuppetRestart: ../../extraconfig/tasks/post_puppet_pacemaker_restart.yaml
+  # Some infra instances don't pass the ping test but are otherwise working.
+  # Since the OVB jobs also test this functionality we can shut it off here.
+  OS::TripleO::AllNodes::Validation: ../common/all-nodes-validation-disabled.yaml
 
 parameter_defaults:
   ControllerServices:
@@ -50,6 +53,7 @@ parameter_defaults:
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::NovaCompute
     - OS::TripleO::Services::NovaLibvirt
+    - OS::TripleO::Services::Sshd
   ControllerExtraConfig:
     nova::compute::libvirt::services::libvirt_virt_type: qemu
     nova::compute::libvirt::libvirt_virt_type: qemu
@@ -59,5 +63,8 @@ parameter_defaults:
     #http://docs.ceph.com/docs/jewel/rados/configuration/filesystem-recommendations/
     ceph::profile::params::osd_max_object_name_len: 256
     ceph::profile::params::osd_max_object_namespace_len: 64
+    #NOTE(gfidente): necessary when deploying a single OSD
+    ceph::profile::params::osd_pool_default_pg_num: 32
+    ceph::profile::params::osd_pool_default_pgp_num: 32
   SwiftCeilometerPipelineEnabled: False
   Debug: True

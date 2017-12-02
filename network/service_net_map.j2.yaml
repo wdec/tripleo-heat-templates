@@ -32,7 +32,7 @@ parameters:
       MongodbNetwork: internal_api
       CinderApiNetwork: internal_api
       CinderIscsiNetwork: storage
-      GlanceApiNetwork: storage
+      GlanceApiNetwork: internal_api
       GlanceRegistryNetwork: internal_api
       IronicApiNetwork: ctlplane
       IronicNetwork: ctlplane
@@ -44,7 +44,6 @@ parameters:
       HeatApiCfnNetwork: internal_api
       HeatApiCloudwatchNetwork: internal_api
       NovaApiNetwork: internal_api
-      NovaColdMigrationNetwork: ctlplane
       NovaMetadataNetwork: internal_api
       NovaVncProxyNetwork: internal_api
       NovaLibvirtNetwork: internal_api

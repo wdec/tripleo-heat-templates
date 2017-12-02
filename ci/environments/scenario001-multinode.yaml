@@ -14,6 +14,9 @@ resource_registry:
   OS::TripleO::Tasks::ControllerPrePuppet: ../../extraconfig/tasks/pre_puppet_pacemaker.yaml
   OS::TripleO::Tasks::ControllerPostPuppet: ../../extraconfig/tasks/post_puppet_pacemaker.yaml
   OS::TripleO::Tasks::ControllerPostPuppetRestart: ../../extraconfig/tasks/post_puppet_pacemaker_restart.yaml
+  # Some infra instances don't pass the ping test but are otherwise working.
+  # Since the OVB jobs also test this functionality we can shut it off here.
+  OS::TripleO::AllNodes::Validation: ../common/all-nodes-validation-disabled.yaml
 
 parameter_defaults:
   ControllerServices:
@@ -43,6 +46,7 @@ parameter_defaults:
     - OS::TripleO::Services::NovaScheduler
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::NovaCompute
     - OS::TripleO::Services::NovaLibvirt
@@ -79,6 +83,9 @@ parameter_defaults:
   ExtraConfig:
     ceph::profile::params::osd_max_object_name_len: 256
     ceph::profile::params::osd_max_object_namespace_len: 64
+    #NOTE(gfidente): necessary when deploying a single OSD
+    ceph::profile::params::osd_pool_default_pg_num: 32
+    ceph::profile::params::osd_pool_default_pgp_num: 32
   #NOTE: These ID's and keys should be regenerated for
   # a production deployment. What is here is suitable for
   # developer and CI testing only.
@@ -91,3 +98,12 @@ parameter_defaults:
   CinderEnableRbdBackend: true
   CinderBackupBackend: ceph
   CinderEnableIscsiBackend: false
+  BannerText: |
+    ******************************************************************
+    * This system is for the use of authorized users only. Usage of  *
+    * this system may be monitored and recorded by system personnel. *
+    * Anyone using this system expressly consents to such monitoring *
+    * and is advised that if such monitoring reveals possible        *
+    * evidence of criminal activity, system personnel may provide    *
+    * the evidence from such monitoring to law enforcement officials.*
+    ******************************************************************

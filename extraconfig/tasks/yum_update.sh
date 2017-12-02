@@ -33,7 +33,19 @@ if [[ -a "$timestamp_file" ]]; then
 fi
 touch "$timestamp_file"
 
+# install openstack-nova-migration on computes prior to checking for updates
+if hiera -c /etc/puppet/hiera.yaml service_names | grep -q nova_compute; then
+    echo "Checking openstack-nova-migration is installed"
+    if ! yum -q list installed openstack-nova-migration > /dev/null 2>&1; then
+        echo "Installing openstack-nova-migration"
+        yum -q -y install openstack-nova-migration
+    fi
+fi
+
 command_arguments=${command_arguments:-}
+
+# Always ensure yum has full cache
+yum makecache || echo "Yum makecache failed. This can cause failure later on."
 
 # yum check-update exits 100 if updates are available
 set +e
@@ -90,6 +102,7 @@ if [[ "$pacemaker_status" == "active" ]] ; then
 else
     update_network
     echo "Upgrading openstack-puppet-modules and its dependencies"
+    check_for_yum_lock
     yum -q -y update openstack-puppet-modules
     yum deplist openstack-puppet-modules | awk '/dependency/{print $2}' | xargs yum -q -y update
     echo "Upgrading other packages is handled by config management tooling"
@@ -99,8 +112,9 @@ fi
 
 command=${command:-update}
 full_command="yum -q -y $command $command_arguments"
-echo "Running: $full_command"
 
+echo "Running: $full_command"
+check_for_yum_lock
 result=$($full_command)
 return_code=$?
 echo "$result"

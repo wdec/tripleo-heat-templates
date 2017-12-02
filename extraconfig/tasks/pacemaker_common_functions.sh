@@ -4,6 +4,28 @@ set -eu
 
 DEBUG="true" # set false if the verbosity is a problem
 SCRIPT_NAME=$(basename $0)
+
+# This block get default for ovs fail mode handling during upgrade.
+function get_all_bridges {
+    local bridges_def=""
+    local bridges=""
+    if which ovs-vsctl &>/dev/null; then
+      if [ -e /etc/neutron/plugins/ml2/openvswitch_agent.ini ]; then
+        local raw_bridge_def=$(crudini --get /etc/neutron/plugins/ml2/openvswitch_agent.ini ovs bridge_mappings)
+        local bridges=""
+        while IFS=: read physnet bridge; do bridges_def="${bridges_def} ${bridge}" ; done \
+          < <(echo "${raw_bridge_def}" | sed 's/,/\n/g')
+        local existing_bridges="$(ovs-vsctl -f table -d bare --column=name --no-headings find Bridge)"
+        for br in ${bridges_def}; do
+            if echo "${existing_bridges}" | grep -q $br; then
+              bridges="${bridges} ${br}"
+            fi
+        done
+      fi
+    fi
+    echo "${bridges}"
+}
+
 function log_debug {
   if [[ $DEBUG = "true" ]]; then
     echo "`date` $SCRIPT_NAME tripleo-upgrade $(facter hostname) $1"
@@ -301,6 +323,8 @@ function systemctl_swift {
 # Special-case OVS for https://bugs.launchpad.net/tripleo/+bug/1635205
 # Update condition and add --notriggerun for +bug/1669714
 function special_case_ovs_upgrade_if_needed {
+    # Always ensure yum has full cache
+    yum makecache || echo "Yum makecache failed. This can cause failure later on."
     if rpm -qa | grep "^openvswitch-2.5.0-14" || rpm -q --scripts openvswitch | awk '/postuninstall/,/*/' | grep "systemctl.*try-restart" ; then
         echo "Manual upgrade of openvswitch - ovs-2.5.0-14 or restart in postun detected"
         rm -rf OVS_UPGRADE
@@ -323,25 +347,44 @@ function special_case_ovs_upgrade_if_needed {
 }
 
 # update os-net-config before ovs see https://bugs.launchpad.net/tripleo/+bug/1695893
+function update_os_net_config() {
+  set +e
+  local need_update="$(yum check-upgrade | grep os-net-config)"
+  if [ -n "${need_update}" ]; then
+      yum -q -y update os-net-config
+      local return_code=$?
+      log_debug "yum update os-net-config return code: $return_code"
+
+      # We're just make sure that os-net-config won't ifdown/ifup
+      # network interfaces.  The current set of changes (Tue Oct 3
+      # 17:38:37 CEST 2017) doesn't require the os-net-config change
+      # to be taken live.  They will be at next reboot.
+      os-net-config --no-activate -c /etc/os-net-config/config.json -v \
+                    --detailed-exit-codes
+      local os_net_retval=$?
+      if [[ $os_net_retval == 2 ]]; then
+          log_debug "os-net-config: interface configuration files updated successfully"
+      elif [[ $os_net_retval != 0 ]]; then
+          log_debug "ERROR: os-net-config configuration failed"
+          exit $os_net_retval
+      fi
+  fi
+  set -e
+}
+
 function update_network() {
-    set +e
-    yum -q -y update os-net-config
-    return_code=$?
-    echo "yum update os-net-config return code: $return_code"
-
-    # Writes any changes caused by alterations to os-net-config and bounces the
-    # interfaces *before* restarting the cluster.
-    os-net-config -c /etc/os-net-config/config.json -v --detailed-exit-codes
-
-    RETVAL=$?
-    if [[ $RETVAL == 2 ]]; then
-        echo "os-net-config: interface configuration files updated successfully"
-    elif [[ $RETVAL != 0 ]]; then
-        echo "ERROR: os-net-config configuration failed"
-        exit $RETVAL
-    fi
-    set -e
-
     # special case https://bugs.launchpad.net/tripleo/+bug/1635205 +bug/1669714
     special_case_ovs_upgrade_if_needed
+}
+
+# https://bugs.launchpad.net/tripleo/+bug/1704131 guard against yum update
+# waiting for an existing process until the heat stack time out
+function check_for_yum_lock {
+    if [[ -f /var/run/yum.pid ]] ; then
+        ERR="ERROR existing yum.pid detected - can't continue! Please ensure
+there is no other package update process for the duration of the minor update
+worfklow. Exiting."
+        echo $ERR
+        exit 1
+   fi
 }

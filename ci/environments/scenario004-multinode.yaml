@@ -20,6 +20,9 @@ resource_registry:
   OS::TripleO::Services::Pacemaker: ../../puppet/services/pacemaker.yaml
   OS::TripleO::Services::MySQL: ../../puppet/services/pacemaker/database/mysql.yaml
   OS::TripleO::Services::Keepalived: OS::Heat::None
+  # Some infra instances don't pass the ping test but are otherwise working.
+  # Since the OVB jobs also test this functionality we can shut it off here.
+  OS::TripleO::AllNodes::Validation: ../common/all-nodes-validation-disabled.yaml
 
 
 parameter_defaults:
@@ -63,6 +66,7 @@ parameter_defaults:
     - OS::TripleO::Services::NovaLibvirt
     - OS::TripleO::Services::TripleoPackages
     - OS::TripleO::Services::TripleoFirewall
+    - OS::TripleO::Services::Sshd
   ControllerExtraConfig:
     nova::compute::libvirt::services::libvirt_virt_type: qemu
     nova::compute::libvirt::libvirt_virt_type: qemu
@@ -72,6 +76,9 @@ parameter_defaults:
   ExtraConfig:
     ceph::profile::params::osd_max_object_name_len: 256
     ceph::profile::params::osd_max_object_namespace_len: 64
+    #NOTE(gfidente): necessary when deploying a single OSD
+    ceph::profile::params::osd_pool_default_pg_num: 32
+    ceph::profile::params::osd_pool_default_pgp_num: 32
   #NOTE: These ID's and keys should be regenerated for
   # a production deployment. What is here is suitable for
   # developer and CI testing only.

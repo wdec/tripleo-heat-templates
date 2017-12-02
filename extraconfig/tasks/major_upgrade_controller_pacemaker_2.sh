@@ -11,6 +11,10 @@ cluster_sync_timeout=1800
 # systemctl try-restart is a noop
 
 for service in $(services_to_migrate); do
+    if [[ ${service%%-clone} =~ .*-cleanup ]]; then
+        # we don't want to stop {netns,ovs}-cleanup
+        continue
+    fi
     manage_systemd_service stop "${service%%-clone}"
     # So the reason for not reusing check_resource_systemd is that
     # I have observed systemctl is-active returning unknown with at least
@@ -58,10 +62,18 @@ if [[ -n $(is_bootstrap_node) ]]; then
     check_resource redis stopped 600
     pcs resource disable rabbitmq
     check_resource rabbitmq stopped 600
-    pcs resource disable galera
-    check_resource galera stopped 600
     pcs resource disable openstack-cinder-volume
     check_resource openstack-cinder-volume stopped 600
+    # We want to remove any duplicate/leftover cinder service
+    # leftover in the database.
+    cinder-manage service list | \
+        awk '/^cinder/{print $1  " "  $2}' | \
+        while read service host; do
+            cinder-manage service remove $service $host;
+        done
+
+    pcs resource disable galera
+    check_resource galera stopped 600
     # Disable all VIPs before stopping the cluster, so that pcs doesn't use one as a source address:
     #   https://bugzilla.redhat.com/show_bug.cgi?id=1330688
     for vip in $(pcs resource show | grep ocf::heartbeat:IPaddr2 | grep Started | awk '{ print $1 }'); do
@@ -99,6 +111,7 @@ if [ $DO_MYSQL_UPGRADE -eq 1 ]; then
     mv /var/lib/mysql $MYSQL_TEMP_UPGRADE_BACKUP_DIR
 fi
 
+update_os_net_config
 # Special-case OVS for https://bugs.launchpad.net/tripleo/+bug/1669714
 update_network
 
@@ -111,6 +124,7 @@ if grep -q '^pipeline = ssl_header_handler faultwrap osvolumeversionapp' /etc/ci
     sed -i '$ { /^$/d }' /etc/cinder/api-paste.ini
 fi
 
+restore_cleanup_service_definition
 
 yum -y install python-zaqarclient  # needed for os-collect-config
 yum -y -q update

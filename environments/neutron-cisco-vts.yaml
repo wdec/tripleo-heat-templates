@@ -19,7 +19,7 @@ resource_registry:
 
   ## Disable/enable VTS agent service. VTS agent and OVS agent are mutually exclusive
   ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
-  #OS::TripleO::Services::VTSAgent: ../puppet/services/neutron-cisco-vts-agent.yaml
+  OS::TripleO::Services::VTSAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/neutron-cisco-vts-agent.yaml
 
   ## VPFA Configuration Hook scripts
   OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
@@ -31,7 +31,7 @@ resource_registry:
   #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
 
   ## Rsyslog client
-  OS::TripleO::Services::RSyslogClient: ../puppet/services/rsyslog-client.yaml
+  OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
 
 
 parameter_defaults:
