@@ -6,7 +6,7 @@ resource_registry:
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
   ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
-  OS::TripleO::Services::ComputeNeutronCorePlugin: OS::Heat::None
+  OS::TripleO::Services::ComputeNeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
   ## Disable Neutron L3 agent that conflict with VPFA
   OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
