@@ -95,8 +95,10 @@
     - OS::TripleO::Services::SensuClient
     - OS::TripleO::Services::FluentdClient
     - OS::TripleO::Services::VipHosts
-#    - OS::TripleO::Services::Vpp
+#    - OS::TripleO::Services::VTSAgent
+#    - OS::TripleO::Services::VppController
 #    - OS::TripleO::Services::CiscoVpfaController
+#    - OS::TripleO::Services::RSyslogClient
 
 - name: Compute
   CountDefault: 1
@@ -123,8 +125,10 @@
     - OS::TripleO::Services::SensuClient
     - OS::TripleO::Services::FluentdClient
     - OS::TripleO::Services::VipHosts
-    - OS::TripleO::Services::VppCompute
-    - OS::TripleO::Services::CiscoVpfaCompute
+#    - OS::TripleO::Services::VTSAgent
+#    - OS::TripleO::Services::VppCompute
+#    - OS::TripleO::Services::CiscoVpfaCompute
+#    - OS::TripleO::Services::RSyslogClient
 
 - name: BlockStorage
   ServicesDefault:
