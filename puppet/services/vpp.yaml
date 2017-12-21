@@ -46,7 +46,7 @@ parameters:
     description: VPP tapcli interface MTU
     type: string
   VppVhostUserDontDumpMem:
-    default: false
+    default: true
     description: Avoids dumping vhost-user shared memory segments to core files.
     type: boolean
 

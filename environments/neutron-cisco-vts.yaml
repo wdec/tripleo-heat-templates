@@ -121,7 +121,7 @@ parameter_defaults:
   #VppCpuCorelistWorkersController: ''
 
   ## Avoid dumping vhost-user shared memory segments to core files
-  #VppVhostUserDontDumpMem: True
+  #VppVhostUserDontDumpMem: false
 
 
   ##########################################
