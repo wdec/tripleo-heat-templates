@@ -1,0 +1,203 @@
+# A docker enabled Heat environment file which can be used to enable Cisco VTS , configured via puppet
+
+# By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
+
+resource_registry:
+  OS::TripleO::Services::NeutronCorePluginVTS: ../../docker/services/neutron-plugin-ml2-cisco-vts.yaml
+  OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+
+  ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
+  OS::TripleO::Services::ComputeNeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+
+  ## Disable Neutron L3 agent that conflict with VPFA
+  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+
+  ## OVS and VTS Agent sub-section ##
+
+  ## Disable/enable the default OVS Agent for compute and controller
+  OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
+  OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
+
+  ## Disable/enable VTS agent service. VTS agent and OVS agent are mutually exclusive
+  ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
+## OS::TripleO::Services::VTSAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/neutron-cisco-vts-agent.yaml
+
+  ## VPFA Configuration Hook scripts
+## OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  ## Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
+##  OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  ## Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
+  #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  ## Rsyslog client
+## OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
+
+  # TODO (wdec) - This is temporary and needs to be handled in tripleo-common
+  DockerNeutronApiImage: 'kolla/centos-binary-neutron-cisco-vts'
+  DockerNeutronConfigImage: 'kolla/centos-binary-neutron-cisco-vts'
+
+parameter_defaults:
+
+  ########################################
+  ### Docker Cisco VTS Neutron images  ###
+  ########################################
+
+  # TODO (wdec) - This may be temporary and should be handled in tripleo-common
+  DockerNeutronApiImage: 'repo/binary-neutron-cisco-vts'
+  DockerNeutronConfigImage: 'repo/binary-neutron-cisco-vts'
+
+  ###################
+  ### VTS General ###
+  ###################
+
+  VTSUsername: 'admin'
+  VTSPassword: ''
+  VTSServer: ''
+  VTSVMMID: ''
+
+  ###################
+  ### Neutron ML2 ###
+  ###################
+
+  NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
+  NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
+  NeutronTypeDrivers: 'vxlan,vlan,flat'
+  NeutronServicePlugins: 'cisco_vts_router,trunk'
+
+  ## DHCP Agent interface driver. Uncomment ONLY if/when deploying VPP on the controller node(s).
+  #NeutronInterfaceDriver: 'cisco_controller.drivers.agent.linux.interface.NamespaceDriver'
+
+  ########################
+  ### VTS Agent Config ###
+  ########################
+
+  VTSPhysicalNet: ''
+  #VTSRetries: 15
+  #VTSTimeout:
+  #VTSPollingInterval: 6
+
+  ###################
+  ### VPFA Config ###
+  ###################
+
+  UnderlayIpNewtorksList: '11.0.0.1/24'
+  VTSR_u_IpAddressList: '10.0.0.1'
+  #VPFAHostname: 'foo'
+  #NetworkConfigMethod: 'static'
+  #NetworkNameServerIP: ''
+  #VifTypeCompute: 'vhostuser'
+  #VifTypeController: 'tap'
+
+  # Set common VTS Network Gateway address or set/override it in PerNodeData below
+  #VTSNetworkIPv4Gateway: '10.0.0.1'
+
+
+  # VPFA Configuration requires the assignment of an underlay IP address for the VPFA per node.
+  # This needs to be specified against the UUID of the target node in a JSON data blob.
+  # To derive the UUID, after node introspection execute the following CLI command steps:
+  #
+  # 1. 'ironic node-list'. Note Openstack ID of the target node
+  # 2. 'openstack baremetal introspection data save <Openstack ID from step1> | jq .extra.system.product.uuid
+  # 3. Note the Node UUID and use it in the json configuration blob below. Multiple nodes can be specified.
+  #
+  # The per-node data can be used to set/override any of the cisco_vpfa:: module configuration parameters
+  #
+
+  PerNodeData: |
+    {
+      "< Node1 UUID >": {
+          "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.2",
+          "cisco_vpfa::vtf_underlay_mask_v4": "24",
+          "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"},
+      "< Node2 UUID >": {
+          "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.3",
+          "cisco_vpfa::vtf_underlay_mask_v4": "24",
+          "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"}
+    }
+
+  #####################################
+  ### VPP Configuration Parameters  ###
+  #####################################
+
+  ## MTU for Tun/tap interfaces
+  #VppTunTapMtu: '9000'
+
+  ##The CPUs listed below need to be part of the grub isol CPU list (configured elsewhere)
+  #VppCpuMainCoreController: '0'
+  #VppCpuMainCoreCompute: '0'
+
+  ## Comma delimited workers list
+  #VppCpuCorelistWorkersCompute: ''
+  #VppCpuCorelistWorkersController: ''
+
+  ## Avoid dumping vhost-user shared memory segments to core files
+  #VppVhostUserDontDumpMem: false
+
+
+  ##########################################
+  ### VPFA rSyslog Client Configuration  ###
+  ##########################################
+
+  # IMPORTANT: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service to come into effect
+
+  # ****** EDIT THE SYSLOG SERVER IP ADDRESS AND PORT IN ClientLogFilters and add/remove entries as needed! *******
+  # The default template below uses UDP (@) servers on port 514. To add a TCP server, add an extra stanza prefixing
+  # with @@ the server's IP address
+
+  ClientLogFilters: |
+    [
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'crit'",
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'err'",
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'warning'",
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'info'",
+        "action": "@[<IP ADDRESS>]:514;forwardFormat"
+      }
+    ]
+
+  # Cisco VPFA default log and priority settings
+  ImFiles: |
+   {
+    "10-vpfa_error_log": {
+      "file_name": "/var/log/vpfa/vpfa_server_errors.log",
+      "file_tag": "vpfa",
+      "file_severity": "err",
+      "file_facility": "local3"
+      },
+    "10-vpfa_warning_log": {
+      "file_name": "/var/log/vpfa/vpfa_server_warning.log",
+      "file_tag": "vpfa",
+      "file_severity": "warning",
+      "file_facility": "local3"
+      },
+     "10-vpfa_critical_log": {
+      "file_name": "/var/log/vpfa/vpfa_server_critical.log",
+      "file_tag": "vpfa",
+      "file_severity": "critical",
+      "file_facility": "local3"
+      },
+     "10-vpfa_info_log": {
+      "file_name": "/var/log/vpfa/vpfa_server.log",
+      "file_tag": "vpfa",
+      "file_severity": "info",
+      "file_facility": "local3"
+      }
+    }
+  ClientLogTemplates: |
+    [
+      {
+        "name": "forwardFormat",
+        "template": "<%PRI%>%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag:1:32%%msg:::sp-if-no-1st-sp%%msg%"
+      }
+    ]

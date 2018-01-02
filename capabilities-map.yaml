@@ -296,6 +296,11 @@ topics:
             description: Enables Neutron L2 gateway Service Plugin and Agent
             requires:
               - overcloud-resource-registry-puppet.yaml
+          - file: environments/neutron-cisco-vts.yaml
+            title: Cisco VTS ML2 Plugin
+            description: Enables Cisco VTS ML2 Plugin
+            requires:
+              - overcloud-resource-registry-puppet.yaml
 
   - title: Storage
     description:
