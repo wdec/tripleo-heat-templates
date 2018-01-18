@@ -117,3 +117,17 @@ outputs:
 
       step_config: |
         include tripleo::profile::base::cisco_vpfa
+      upgrade_tasks:
+        - name: Check if vpfa is deployed
+          command: systemctl is-enabled vpfa
+          tags: common
+          ignore_errors: True
+          register: vpfa_enabled
+        - name: "PreUpgrade step0,validation: Check if service vpfa is running"
+          shell: /usr/bin/systemctl show 'vpfa' --property ActiveState | grep '\bactive\b'
+          when: vpfa_enabled.rc == 0
+          tags: step0,validation
+        - name: Stop vpfa service
+          tags: step1
+          when: vpfa_enabled.rc == 0
+          service: name=vpfa state=stopped
