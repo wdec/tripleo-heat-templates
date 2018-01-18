@@ -26,16 +26,15 @@ parameters:
     description: List of new packages. Each has to be enclosed by double quotes.
     type: string
     default: '
-      "cisco-vts-agent", "python-cisco-controller",
       "cisco-vts-puppet-neutron", "cisco-vts-puppet-tripleo",
-      "monit", "collectd", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
+      "monit", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
       "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
       "cisco-vts-os-util"
       '
   VTSUpgradeNewForgePackages:
     description: List of new packages from puppet forge. Each has to be enclosed by double quotes.
     type: string
-    default: '"sbitio-monit --version 1.1.0", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
+    default: '"puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
   VTSyumRepos:
     description: Configuration of VTS package yum repos
     type: string
@@ -49,9 +48,9 @@ parameters:
       gpgcheck = 0
       metadata_expire = 86400
 
-      [cisco2.6.1.vts261-os-newton]
-      name=cisco2.6.1.vts261-os-newton
-      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261-os-newton
+      [cisco2.6.1.vts261-os-pike]
+      name=cisco2.6.1.vts261-os-pike
+      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/tbr__2.6.1.vts261dev-os-pike
       username=
       password=
       enabled = 1
@@ -99,20 +98,22 @@ resources:
               }
 
               if !empty([FORGEPACKAGES]) {
-                install_puppet_mods{ [FORGEPACKAGES] : }
+                vts_install::install_puppet_mods{ [FORGEPACKAGES] : }
               }
 
               if !empty("VTS_YUM_REPOS") {
-                file {'new VTS repo':
-                  path    => "/etc/yum.repos.d/${::vts_current_version}.cisco_vts.repo",
-                  ensure  => 'present',
-                  content => "VTS_YUM_REPOS",
-                }
 
                 tidy {'remove previous VTS repos':
                   path    => "/etc/yum.repos.d/",
                   matches => ["${::vts_previous_version}*.repo"],
                   recurse => 1,
+                }
+
+                file {'new VTS repo':
+                  path    => "/etc/yum.repos.d/${::vts_current_version}.cisco_vts.repo",
+                  ensure  => 'present',
+                  content => "VTS_YUM_REPOS",
+                  subscribe => Tidy['remove previous VTS repos'],
                 }
               }
 
@@ -126,7 +127,7 @@ resources:
 
             class vts_fixups {
 
-              #Fixup OSPD10 image issue
+              #Fixup OSPD image issues
 
               file {'/etc/puppet/modules/collectd':
                 ensure => 'link',

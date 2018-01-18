@@ -17,6 +17,7 @@ echo $vpp_conf | python -c "
 
 # Start of Python script
 # NOTE: Script relies on bash variable substitution for $node_id
+# DO NOT USE DOUBLE QUOTES IN THE PYTHON CODE!
 
 import ast
 from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
@@ -32,9 +33,9 @@ import time
 VPFA_INIT = '/etc/vpe/vpfa/vpfa_init.sh'
 DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
 UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
-HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
-HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.yaml'
-OS_NET_CONF = '/etc/os-net-config/config.json'
+HIERA_DATA = '/etc/puppet/hieradata/${node_id}.json'
+HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.json'
+OS_NET_CONF = '/etc/os-net-config/element_config.json'
 LLDP_CONF = '/etc/vpe/lldp/lldp.conf'
 
 dpdk_data = []
@@ -91,7 +92,7 @@ def write_node_data(env_params):
   node_env = env_params.get('NODE_DATA', {}).get('${node_id}', {})
   with open(HIERA_DATA, 'w') as hierafile:
     try:
-      yaml.safe_dump(node_env, hierafile, default_flow_style=False)
+      json.dump(node_env, hierafile, indent=2)
     except IOError as e:
       print('ERROR: VPFA Extra Config hiera node data file error: {}'.format(str(e)))
       raise e
@@ -154,7 +155,7 @@ def update_with_lldp(env_params, interfaces=[]):
   # First Check if LLDP is meant to be configured
   with open(HIERA_SERVICE_CONFIG, 'r') as hiera_service_c:
     try:
-      config = yaml.load(hiera_service_c)
+      config = json.load(hiera_service_c)
     except IOError as e:
       print('ERROR: VPFA Extra Config os-net-config file error: {}'.format(str(e)))
       raise e
