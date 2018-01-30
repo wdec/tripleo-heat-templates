@@ -1,0 +1,134 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Puppet Monit agent configuration.
+  Uses sbitio/puppet-monit.
+
+parameters:
+
+  MonitEnable:
+    type: boolean
+    description: Enable monit at boot
+    default: true
+  MonitEnsure:
+    type: string
+    description: Runtime status, either 'running' or 'stopped'
+    default: 'running'
+  MonitHttpServer:
+    type: boolean
+    description: Enable default monit http server
+    default: true
+  MonitHttpServerPort:
+    type: number
+    description: Monit http server port
+    default: 2812
+  MonitBindAddress:
+    type: string
+    description: |
+      Interface address on which server will open a bind.
+      Defaults to system management IP
+    default: '"%{::ipaddress}"'
+  MonitAllow:
+    type: json
+    description: |
+      A JSON list of allow statement for expressing restriction on
+      access to the http server. See monit docs
+      Eg To set user and password restrictions, configure
+        MonitAllow: [ "user:passwd" ]
+    default: []
+  MonitChecks:
+    description: |
+      A JSON dict containing the checked types configuration.
+      Configuration of each type differs.
+      See https://github.com/sbitio/puppet-monit
+    type: json
+    default: {}
+  MonitCheckInterval:
+    type: number
+    description: Monit check interval
+    default: 30
+  MonitStartDelay:
+    type: number
+    description: Monit start delay
+    default: 60
+  MonitEventqueue:
+    type: boolean
+    description: Enable or disable the event queue
+    default: true
+  MonitConfFile:
+    type: string
+    description: Alternative monit config file
+    default: ""
+  MonitConfDir:
+    type: string
+    description: Alternative monit config dir
+    default: ""
+  MonitSystemCheck:
+    type: string
+    description: |
+      Enable default system monitoring config. Either 'present' or 'absent'
+    default: "absent"
+  MonitLogFile:
+    type: string
+    description: Path to monit's log file. Set to 'syslog' to use syslog
+    default: 'syslog'
+
+
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+#conditions:
+#Conditions not supported in this version of templates. Requires 2016-10-14
+#  bindip:
+#    not:
+#      equals:
+#        - get_param: MonitBindAddress
+#        - ""
+
+
+outputs:
+  role_data:
+    description: Role Data for the Monit agent service.
+    value:
+      service_name: monit_agent
+      config_settings:
+        map_merge:
+          - monit::service_enable: {get_param: MonitEnable}
+            monit::service_ensure: {get_param: MonitEnsure}
+            monit::httpserver: {get_param: MonitHttpServer}
+            monit::httpserver_bind_address: {get_param: MonitBindAddress}
+            monit::httpserver_port: {get_param: MonitHttpServerPort}
+            monit::httpserver_allow: {get_param: MonitAllow}
+            monit::checks: {get_param: MonitChecks}
+            monit::check_interval: {get_param: MonitCheckInterval}
+            monit::check_start_delay: {get_param: MonitStartDelay}
+            monit::eventqueue: {get_param: MonitEventqueue}
+            monit::conf_file: {get_param: MonitConfFile}
+            monit::conf_dir: {get_param: MonitConfDir}
+            monit::system_check_ensure: {get_param: MonitSystemCheck}
+            monit::logfile: {get_param: MonitLogFile}
+            tripleo.monit_agent.firewall_rules:
+              '256 monit agent':
+                dport:
+                  - {get_param: MonitHttpServerPort}
+#                destination:
+#                  value: {get_param: MonitBindAddress}
+#                  condition: bindip
+                proto: tcp
+                action: accept
+      step_config: |
+        include ::monit

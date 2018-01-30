@@ -99,6 +99,7 @@
 #    - OS::TripleO::Services::VppController
 #    - OS::TripleO::Services::CiscoVpfaController
 #    - OS::TripleO::Services::RSyslogClient
+#    - OS::TripleO::Services::MonitAgent
 
 - name: Compute
   CountDefault: 1
@@ -129,6 +130,7 @@
 #    - OS::TripleO::Services::VppCompute
 #    - OS::TripleO::Services::CiscoVpfaCompute
 #    - OS::TripleO::Services::RSyslogClient
+#    - OS::TripleO::Services::MonitAgent
 
 - name: BlockStorage
   ServicesDefault:

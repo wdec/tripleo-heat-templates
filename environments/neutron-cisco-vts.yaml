@@ -33,6 +33,8 @@ resource_registry:
   ## Rsyslog client
   OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
 
+  ## Monit agent
+  OS::TripleO::Services::MonitAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent.yaml
 
 parameter_defaults:
 
@@ -189,3 +191,38 @@ parameter_defaults:
         "template": "<%PRI%>%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag:1:32%%msg:::sp-if-no-1st-sp%%msg%"
       }
     ]
+
+
+  ##################################
+  ### Monit Agent Configuration  ###
+  ##################################
+
+  # Credentials
+  MonitAllow: ["monit-ro:monit-ro"]
+  # Monti port
+  MonitHttpServerPort: 2888
+  MonitChecks: |
+    {
+    "vpp":
+      {
+      "type": "process",
+      "config":
+        {
+        "matching": "vpp",
+        "program_start": "/sbin/service vpp start",
+        "program_stop": "/sbin/service vpp stop"
+        }
+      },
+    "vpfa":
+      {
+      "type": "process",
+      "config":
+        {
+        "matching": "vpfa",
+        "program_start": "/sbin/service vpfa start",
+        "program_stop": "/sbin/service vpfa stop"
+        }
+      }
+    }
+
+
