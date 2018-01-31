@@ -230,7 +230,7 @@ parameter_defaults:
       "type": "process",
       "config":
         {
-        "matching": "vpfa",
+        "matching": "vpfa_restconf_server",
         "program_start": "/sbin/service vpfa start",
         "program_stop": "/sbin/service vpfa stop"
         }
