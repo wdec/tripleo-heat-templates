@@ -2,7 +2,7 @@ heat_template_version: 2016-04-08
 
 description: >
   Puppet Collectd agent configuration.
-  Uses puppet/collectd.
+  Uses puppet/collectd module.
 
 parameters:
 
@@ -11,17 +11,57 @@ parameters:
     description: Enable or disable the collectd agent service.
     type: boolean
 
+  CollectDManagePackage:
+    default: false
+    description: Enable or disable the collectd package management.
+    type: boolean
 
+  CollectDManageRepo:
+    default: false
+    description: Enable or disable the collectd package management.
+    type: boolean
+
+  CollectDPurge:
+    default: true
+    description: Enable or disable config purging
+    type: boolean
+
+  CollectDInterval:
+    default: 120
+    description: Collection interval
+    type: number
+
+  CollectDPluginConfigs:
+    type: json
+    description: |
+      XML Configuration for each keyed plugin. Multiple config lines split across array entries.
+      Eg. {
+            "vpfa_plugin": {
+              "content": [
+                "<section>",
+                "...config...",
+                "</section>"
+              ]
+            },
+            "other_plugin": {
+              "content": [
+                "<section>",
+                "...config...",
+                "</section>"
+              ]
+            }
+          }
+    default: {}
 
   EndpointMap:
     default: {}
-    description: >
+    description: |
       Mapping of service endpoint -> protocol. Typically set
       via parameter_defaults in the resource registry.
     type: json
   ServiceNetMap:
     default: {}
-    description: >
+    description: |
       Mapping of service_name -> network name. Typically set
       via parameter_defaults in the resource registry.  This
       mapping overrides those in ServiceNetMapDefaults.
@@ -30,15 +70,6 @@ parameters:
     default: {}
     type: json
 
-#conditions:
-#Conditions not supported in this version of templates. Requires 2016-10-14
-#  bindip:
-#    not:
-#      equals:
-#        - get_param: MonitBindAddress
-#        - ""
-
-
 outputs:
   role_data:
     description: Role Data for the Monit agent service.
@@ -46,6 +77,10 @@ outputs:
       service_name: collectd_agent
       config_settings:
         map_merge:
-          - monit::service_enable: {get_param: CollectDEnable}
+          - collectd::service_enable: {get_param: CollectDEnable}
+          - collectd::manage_repo: {get_param: CollectDManageRepo}
+          - collectd::manage_package: {get_param: CollectDManagePackage}
+          - collectd::interval: {get_param: CollectDInterval}
+            tripleo::collectd:plugin_config: { get_param: CollectDPluginConfigs }
       step_config: |
-        include ::collectd
+        include ::tripleo::profile::base::collectd

@@ -175,4 +175,4 @@ outputs:
               '136 neutron gre networks':
                 proto: 'gre'
       step_config: |
-        include ::tripleo::profile::base::neutron::cisco_vts_agent
+        include ::tripleo::profile::base::collectd
