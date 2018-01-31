@@ -28,6 +28,12 @@ parameters:
     description: Timeout for VTS server
     type: number
     default: 120
+  NeutronInterfaceDriver:
+  # Newton fix - TODO Remove for Queens
+    description: Neutron DHCP interface driver (temporary)
+    type: string
+    default: 'neutron.agent.linux.interface.OVSInterfaceDriver'
+
   EndpointMap:
     default: {}
     description: >
@@ -68,5 +74,8 @@ outputs:
             neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
             neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
             neutron::plugins::ml2::cisco::vts::vts_timeout: {get_param: VTSTimeout}
+        # Newton fix - TODO Remove for Queens
+            neutron::agents::dhcp::interface_driver: {get_param: NeutronInterfaceDriver}
+
       step_config: |
         include ::tripleo::profile::base::neutron::plugins::ml2

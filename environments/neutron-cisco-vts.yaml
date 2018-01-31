@@ -3,6 +3,9 @@
 # By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
 resource_registry:
+
+  # Base Neutron ML2 definitions for VTS
+  OS::TripleO::Services::NeutronCorePluginVTS: /usr/share/openstack-tripleo-heat-templates/puppet/services/neutron-plugin-ml2-cisco-vts.yaml
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
   ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
@@ -32,6 +35,12 @@ resource_registry:
 
   ## Rsyslog client
   OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
+
+  OS::TripleO::Services::Vpp: OS::Heat::None
+  OS::TripleO::Services::VppCompute: /usr/share/openstack-tripleo-heat-templates/puppet/services/vpp-compute.yaml
+  OS::TripleO::Services::VppController: /usr/share/openstack-tripleo-heat-templates/puppet/services/vpp-controller.yaml
+  OS::TripleO::Services::CiscoVpfaCompute: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vpfa-compute.yaml
+  OS::TripleO::Services::CiscoVpfaController: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vpfa-controller.yaml
 
   ## Monit agent
   OS::TripleO::Services::MonitAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent.yaml

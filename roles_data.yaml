@@ -63,6 +63,7 @@
     - OS::TripleO::Services::SwiftStorage
     - OS::TripleO::Services::SwiftRingBuilder
     - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::CeilometerApi
     - OS::TripleO::Services::CeilometerCollector
@@ -95,11 +96,6 @@
     - OS::TripleO::Services::SensuClient
     - OS::TripleO::Services::FluentdClient
     - OS::TripleO::Services::VipHosts
-#    - OS::TripleO::Services::VTSAgent
-#    - OS::TripleO::Services::VppController
-#    - OS::TripleO::Services::CiscoVpfaController
-#    - OS::TripleO::Services::RSyslogClient
-#    - OS::TripleO::Services::MonitAgent
 
 - name: Compute
   CountDefault: 1
@@ -111,6 +107,7 @@
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
     - OS::TripleO::Services::NovaCompute
     - OS::TripleO::Services::NovaLibvirt
     - OS::TripleO::Services::Kernel
@@ -126,11 +123,6 @@
     - OS::TripleO::Services::SensuClient
     - OS::TripleO::Services::FluentdClient
     - OS::TripleO::Services::VipHosts
-#    - OS::TripleO::Services::VTSAgent
-#    - OS::TripleO::Services::VppCompute
-#    - OS::TripleO::Services::CiscoVpfaCompute
-#    - OS::TripleO::Services::RSyslogClient
-#    - OS::TripleO::Services::MonitAgent
 
 - name: BlockStorage
   ServicesDefault:
@@ -140,6 +132,7 @@
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
     - OS::TripleO::Services::TripleoPackages
     - OS::TripleO::Services::TripleoFirewall
     - OS::TripleO::Services::SensuClient
@@ -154,6 +147,7 @@
     - OS::TripleO::Services::SwiftStorage
     - OS::TripleO::Services::SwiftRingBuilder
     - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::TripleoPackages
     - OS::TripleO::Services::TripleoFirewall
@@ -168,6 +162,7 @@
     - OS::TripleO::Services::Kernel
     - OS::TripleO::Services::Ntp
     - OS::TripleO::Services::Snmp
+    - OS::TripleO::Services::Sshd
     - OS::TripleO::Services::Timezone
     - OS::TripleO::Services::TripleoPackages
     - OS::TripleO::Services::TripleoFirewall
