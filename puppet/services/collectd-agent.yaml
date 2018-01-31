@@ -1,0 +1,51 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Puppet Collectd agent configuration.
+  Uses puppet/collectd.
+
+parameters:
+
+  CollectDEnable:
+    default: true
+    description: Enable or disable the collectd agent service.
+    type: boolean
+
+
+
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+#conditions:
+#Conditions not supported in this version of templates. Requires 2016-10-14
+#  bindip:
+#    not:
+#      equals:
+#        - get_param: MonitBindAddress
+#        - ""
+
+
+outputs:
+  role_data:
+    description: Role Data for the Monit agent service.
+    value:
+      service_name: collectd_agent
+      config_settings:
+        map_merge:
+          - monit::service_enable: {get_param: CollectDEnable}
+      step_config: |
+        include ::collectd

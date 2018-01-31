@@ -197,9 +197,12 @@ parameter_defaults:
   ### Monit Agent Configuration  ###
   ##################################
 
+  # To enable, add the  "OS::TripleO::Services::MonitAgent" to the role data config
+
+
   # Credentials
   MonitAllow: ["monit-ro:monit-ro"]
-  # Monti port
+  # Monit port
   MonitHttpServerPort: 2888
   MonitChecks: |
     {
