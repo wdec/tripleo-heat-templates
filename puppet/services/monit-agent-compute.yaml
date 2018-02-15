@@ -58,4 +58,4 @@ outputs:
           - get_attr: [MonitAgentBase, role_data, config_settings]
             monit::checks: {get_param: MonitVpfaChecks}
       step_config: |
-        include ::monit
+        include ::tripleo::profile::base::monit_agent

@@ -131,4 +131,4 @@ outputs:
                 proto: tcp
                 action: accept
       step_config: |
-        include ::monit
+        include ::tripleo::profile::base::monit_agent
