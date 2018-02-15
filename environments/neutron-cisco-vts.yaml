@@ -44,6 +44,8 @@ resource_registry:
 
   ## Monit agent
   OS::TripleO::Services::MonitAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent.yaml
+  OS::TripleO::Services::MonitVpfaAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent-vpfa.yaml
+  OS::TripleO::Services::CollectDAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/collectd-agent.yaml
 
 parameter_defaults:
 
@@ -139,7 +141,8 @@ parameter_defaults:
   ### VPFA rSyslog Client Configuration  ###
   ##########################################
 
-  # IMPORTANT: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service to come into effect
+  # IMPORTANT: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service config to come into
+  # effect
 
   # ****** EDIT THE SYSLOG SERVER IP ADDRESS AND PORT IN ClientLogFilters and add/remove entries as needed! *******
   # The default template below uses UDP (@) servers on port 514. To add a TCP server, add an extra stanza prefixing
@@ -206,14 +209,18 @@ parameter_defaults:
   ### Monit Agent Configuration  ###
   ##################################
 
-  # To enable, add the  "OS::TripleO::Services::MonitAgent" to the role data config
+  # IMPORTANT: To enable the Monit Agent config, add the  "OS::TripleO::Services::MonitAgent" or
+  # "OS::TripleO::Services::MonitVpfaAgent" to the role data configuration.
 
 
+  ## General settings. Applied to all Monit Agents
   # Credentials
   MonitAllow: ["monit-ro:monit-ro"]
-  # Monit port
+  # Monit server port
   MonitHttpServerPort: 2888
-  MonitChecks: |
+
+  # Generic check config applied on nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
+  MonitVpfaChecks: |
     {
     "vpp":
       {
@@ -237,4 +244,45 @@ parameter_defaults:
       }
     }
 
+  # Check config applied on nodes enabled with the OS::TripleO::Services::MonitAgent role.
+  MonitChecks: |
+    {
+    }
 
+
+  #####################################
+  ### Collectd Agent Configuration  ###
+  #####################################
+
+  # IMPORTANT: To enable the Collectd Agent config, add the  "OS::TripleO::Services::MonitAgent" or
+  # "OS::TripleO::Services::MonitVpfaAgent" to the role data configuration.
+
+
+  #Enable or disable collectd (default is true)
+  # CollectDEnable: true
+
+  CollectDPurge: true
+
+  CollectDPluginConfigs: |
+    {
+            "memory": {
+              "content": [
+              "<Plugin memory>",
+                "ValuesAbsolute true",
+                "ValuesPercentage false",
+              "</Plugin>"
+              ]
+            },
+            "cpu": {
+              "content": [
+                "<Plugin cpu>",
+                   "ReportByCpu true",
+                   "ReportByState true",
+                   "ValuesPercentage false",
+                   "ReportNumCpu false",
+                   "ReportGuestState false",
+                   "SubtractGuestState true",
+                 "</Plugin>"
+              ]
+            }
+    }

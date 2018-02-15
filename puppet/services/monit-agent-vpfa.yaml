@@ -1,0 +1,61 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Alternative Puppet Monit agent configuration allowing different check configuration for Vpfa nodes.
+  Uses sbitio/puppet-monit.
+
+parameters:
+
+  MonitVpfaChecks:
+    description: |
+      A JSON dict containing the generic checked types configuration.
+      Configuration of each type is specific to that type.
+      See https://github.com/sbitio/puppet-monit/blob/master/README.md
+    type: json
+    default: {}
+
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+#conditions:
+#Conditions not supported in this version of templates. Requires 2016-10-14
+#  bindip:
+#    not:
+#      equals:
+#        - get_param: MonitBindAddress
+#        - ""
+
+resources:
+
+  MonitAgentBase:
+    type: ./monit-agent.yaml
+    properties:
+      ServiceNetMap: {get_param: ServiceNetMap}
+      DefaultPasswords: {get_param: DefaultPasswords}
+      EndpointMap: {get_param: EndpointMap}
+
+outputs:
+  role_data:
+    description: Role Data for the Monit agent service.
+    value:
+      service_name: monit_agent
+      config_settings:
+        map_merge:
+          - get_attr: [MonitAgentBase, role_data, config_settings]
+            monit::checks: {get_param: MonitVpfaChecks}
+      step_config: |
+        include ::monit

@@ -36,18 +36,18 @@ parameters:
     description: |
       XML Configuration for each keyed plugin. Multiple config lines split across array entries.
       Eg. {
-            "vpfa_plugin": {
+            "some_plugin": {
               "content": [
-                "<section>",
-                "...config...",
-                "</section>"
+                "<Plugin some_plugin>",
+                "...plugin config...",
+                "</Plugin>"
               ]
             },
             "other_plugin": {
               "content": [
-                "<section>",
-                "...config...",
-                "</section>"
+                "<Plugin other_plugin>",
+                "...plugin config...",
+                "</Plugin>"
               ]
             }
           }

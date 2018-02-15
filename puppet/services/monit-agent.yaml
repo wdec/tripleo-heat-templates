@@ -35,12 +35,12 @@ parameters:
       access to the http server. See monit docs
       Eg To set user and password restrictions, configure
         MonitAllow: [ "user:passwd" ]
-    default: []
+    default:
   MonitChecks:
     description: |
-      A JSON dict containing the checked types configuration.
-      Configuration of each type differs.
-      See https://github.com/sbitio/puppet-monit
+      A JSON dict containing the generic checked types configuration.
+      Configuration of each type is specific to that type.
+      See https://github.com/sbitio/puppet-monit/blob/master/README.md
     type: json
     default: {}
   MonitCheckInterval:
