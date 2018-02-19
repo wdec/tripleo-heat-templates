@@ -6,7 +6,7 @@ description: >
 
 parameters:
 
-  MonitVpfaChecks:
+  MonitComputeChecks:
     description: |
       A JSON dict containing the generic checked types configuration.
       Configuration of each type is specific to that type.
@@ -31,14 +31,6 @@ parameters:
     default: {}
     type: json
 
-#conditions:
-#Conditions not supported in this version of templates. Requires 2016-10-14
-#  bindip:
-#    not:
-#      equals:
-#        - get_param: MonitBindAddress
-#        - ""
-
 resources:
 
   MonitAgentBase:
@@ -56,6 +48,6 @@ outputs:
       config_settings:
         map_merge:
           - get_attr: [MonitAgentBase, role_data, config_settings]
-            monit::checks: {get_param: MonitVpfaChecks}
+          - monit::checks: {get_param: MonitComputeChecks}
       step_config: |
         include ::tripleo::profile::base::monit_agent

@@ -6,6 +6,15 @@ description: >
 
 parameters:
 
+  MonitUser:
+    type: string
+    description: Monit server Username
+    default: ''
+  MonitPassword:
+    type: string
+    description: Monit server Password
+    default:
+    hidden: true
   MonitEnable:
     type: boolean
     description: Enable monit at boot
@@ -31,11 +40,10 @@ parameters:
   MonitAllow:
     type: json
     description: |
-      A JSON list of allow statement for expressing restriction on
-      access to the http server. See monit docs
-      Eg To set user and password restrictions, configure
-        MonitAllow: [ "user:passwd" ]
-    default:
+      A JSON list of allow statement for expressing restriction on access to the http server. See monit docs.
+      NOTE: As a convenience Username and password, although belonging to the 'allow' set are being set in TripleO
+      using their dedicated parameters.
+    default: []
   MonitChecks:
     description: |
       A JSON dict containing the generic checked types configuration.
@@ -72,7 +80,18 @@ parameters:
     type: string
     description: Path to monit's log file. Set to 'syslog' to use syslog
     default: 'syslog'
-
+  MonitSSL:
+    type: boolean
+    description: Enable or disable monit SSL transport
+    default: true
+  MonitSSLPemFile:
+    type: string
+    description: Path to monit's the PEM file for use with SSL.
+    default: ''
+  MonitPurgeConfig:
+    type: boolean
+    description: Enable or disable purge of existing config files
+    default: false
 
   EndpointMap:
     default: {}
@@ -91,14 +110,6 @@ parameters:
     default: {}
     type: json
 
-#conditions:
-#Conditions not supported in this version of templates. Requires 2016-10-14
-#  bindip:
-#    not:
-#      equals:
-#        - get_param: MonitBindAddress
-#        - ""
-
 
 outputs:
   role_data:
@@ -106,13 +117,14 @@ outputs:
     value:
       service_name: monit_agent
       config_settings:
-        map_merge:
-          - monit::service_enable: {get_param: MonitEnable}
+            tripleo::monit_agent::user: {get_param: MonitUser}
+            tripleo::monit_agent::password: {get_param: MonitPassword}
+            monit::service_enable: {get_param: MonitEnable}
             monit::service_ensure: {get_param: MonitEnsure}
             monit::httpserver: {get_param: MonitHttpServer}
             monit::httpserver_bind_address: {get_param: MonitBindAddress}
             monit::httpserver_port: {get_param: MonitHttpServerPort}
-            monit::httpserver_allow: {get_param: MonitAllow}
+            tripleo::monit::allow: {get_param: MonitAllow}
             monit::checks: {get_param: MonitChecks}
             monit::check_interval: {get_param: MonitCheckInterval}
             monit::check_start_delay: {get_param: MonitStartDelay}
@@ -121,13 +133,13 @@ outputs:
             monit::conf_dir: {get_param: MonitConfDir}
             monit::system_check_ensure: {get_param: MonitSystemCheck}
             monit::logfile: {get_param: MonitLogFile}
+            monit::httpserver_ssl: {get_param: MonitSSL}
+            monit::httpserver_pemfile: {get_param: MonitSSLPemFile}
+            monit::conf_purge: {get_param: MonitPurgeConfig}
             tripleo.monit_agent.firewall_rules:
               '256 monit agent':
                 dport:
                   - {get_param: MonitHttpServerPort}
-#                destination:
-#                  value: {get_param: MonitBindAddress}
-#                  condition: bindip
                 proto: tcp
                 action: accept
       step_config: |
