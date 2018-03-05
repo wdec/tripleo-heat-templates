@@ -45,7 +45,7 @@ resource_registry:
 
   ## Monit agent service(s)
   OS::TripleO::Services::MonitAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent.yaml
-  OS::TripleO::Services::MonitComputeAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent-compute.yaml
+  OS::TripleO::Services::MonitVpfaAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent-vpfa.yaml
 
   ## Collectd agent service
   OS::TripleO::Services::CollectDAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/collectd-agent.yaml
@@ -209,8 +209,8 @@ parameter_defaults:
   ### Monit Agent Configuration  ###
   ##################################
 
-  # IMPORTANT: To enable the Monit Agent config, add the  "OS::TripleO::Services::MonitAgent" or
-  # "OS::TripleO::Services::MonitComputeAgent" to the nodes role data configuration.
+  # IMPORTANT: To enable the Monit Agent config, add the VPFA specific "OS::TripleO::Services::MonitVpfaAgent"
+  # or generic "OS::TripleO::Services::MonitAgent" to the corresponding nodes role data configuration.
 
 
   ## General settings. Applied to all Monit Agents
@@ -219,11 +219,19 @@ parameter_defaults:
   MonitPassword:
   MonitSSLPemFile: '/etc/ssl/certs/monit.pem'
 
+  ## VPFA Monit node bind IP address - when unset, defaults to use underlay IP of the VPFA
+  #MonitVpfaBindAddress:
+  ## Generic node's monit server bind IP address - when unset, defaults to the management IP of the node.
+  #MonitBindAddress:
+
   ## Monit server port
   #MonitHttpServerPort: 2812
 
-  ## Generic check config applied on nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
-  MonitComputeChecks: |
+  ## Monit check interval
+  # MonitCheckInterval: 30
+
+  ## Monit Check config applied on nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
+  MonitVpfaChecks: |
     {
     "vpp":
       {
@@ -266,80 +274,94 @@ parameter_defaults:
   ## Purge default/previous configurations
   CollectDPurge: true
 
-
+  ## CollectD Plugin configurations
+  ## Each named plugin should have its own named dict entry, followed by a "content" element containing the
+  ## plugin's XML configuration stanza, in JSON list format.
   CollectDPluginConfigs: |
     {
-            "memory":
-            {
-              "content":
-              [
-              "<Plugin memory>",
-                "ValuesAbsolute true",
-                "ValuesPercentage false",
-              "</Plugin>"
-              ]
-            },
-            "cpu":
-            {
-              "content":
-              [
-                "<Plugin cpu>",
-                   "ReportByCpu true",
-                   "ReportByState true",
-                   "ValuesPercentage false",
-                   "ReportNumCpu false",
-                   "ReportGuestState false",
-                   "SubtractGuestState true",
-                 "</Plugin>"
-              ]
-            },
-            "python":
-            {
-              "content":
-              [
-                "<Plugin python>",
-                "ModulePath \"/opt/cisco/vpe/collectd/\"",
-                "LogTraces true",
-                "Import \"cisco-vpfa-collectd-plugin\"",
-                "</Plugin>"
-              ]
-            },
-            "write_log":
-            {
-              "content":
-              [
-                "<Plugin write_log>",
-                "Format JSON",
-                "</Plugin>"
-              ]
-            },
-            "interface":
-            {
-              "content":
-              [
-                "<Plugin interface>",
-                "Interface \"eth0\"",
-                "Interface \"eth1\"",
-                "Interface \"lo\"",
-                "IgnoreSelected false",
-                "ReportInactive true",
-                "UniqueName false",
-                "</Plugin>"
-              ]
-            },
-            "disk":
-            {
-              "content":
-              []
-            },
-            "load":
-            {
-              "content":
-              [
-                "<Plugin load>",
-                "ReportRelative true",
-                "</Plugin>"
-              ]
-            }
+      "memory":
+      {
+        "content":
+        [
+        "<Plugin memory>",
+          "ValuesAbsolute true",
+          "ValuesPercentage false",
+        "</Plugin>"
+        ]
+      },
+      "cpu":
+      {
+        "content":
+        [
+          "<Plugin cpu>",
+             "ReportByCpu true",
+             "ReportByState true",
+             "ValuesPercentage false",
+             "ReportNumCpu false",
+             "ReportGuestState false",
+             "SubtractGuestState true",
+           "</Plugin>"
+        ]
+      },
+      "python":
+      {
+        "content":
+        [
+          "<Plugin python>",
+          "ModulePath \"/opt/cisco/vpe/collectd/\"",
+          "LogTraces true",
+          "Import \"cisco-vpfa-collectd-plugin\"",
+          "</Plugin>"
+        ]
+      },
+      "write_log":
+      {
+        "content":
+        [
+          "<Plugin write_log>",
+          "Format JSON",
+          "</Plugin>"
+        ]
+      },
+      "interface":
+      {
+        "content":
+        [
+          "<Plugin interface>",
+          "Interface \"eth0\"",
+          "Interface \"eth1\"",
+          "Interface \"lo\"",
+          "IgnoreSelected false",
+          "ReportInactive true",
+          "UniqueName false",
+          "</Plugin>"
+        ]
+      },
+      "disk":
+      {
+        "content":
+        []
+      },
+      "load":
+      {
+        "content":
+        [
+          "<Plugin load>",
+          "ReportRelative true",
+          "</Plugin>"
+        ]
+      },
+      "write_http":
+      {
+        "content":
+        [
+          "<Plugin write_http>",
+          "<Node \"vtfstats\">",
+          "URL \"http://127.0.0.1:55556\"",
+          "Format \"JSON\"",
+          "</Node>",
+          "</Plugin>"
+        ]
+      }
     }
 

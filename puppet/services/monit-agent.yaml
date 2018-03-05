@@ -34,7 +34,7 @@ parameters:
   MonitBindAddress:
     type: string
     description: |
-      Interface address on which server will open a bind.
+      Interface address to which the Monit server will bind to.
       Defaults to system management IP
     default: '"%{::ipaddress}"'
   MonitAllow:

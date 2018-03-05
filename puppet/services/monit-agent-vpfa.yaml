@@ -1,12 +1,18 @@
 heat_template_version: 2016-04-08
 
 description: >
-  Alternative Puppet Monit agent configuration allowing different check configuration for Vpfa nodes.
+  Alternative Puppet Monit agent service configuration specific configuration for VPFA nodes.
   Uses sbitio/puppet-monit.
 
 parameters:
 
-  MonitComputeChecks:
+  MonitVpfaBindAddress:
+    description: |
+      Interface address to which the Monit server will bind to. For compute nodes defaults to the VPFA
+      Underlay IP address
+    type: string
+    default: '"%{hiera(\"cisco_vpfa::vtf_underlay_ip_v4\")}"'
+  MonitVpfaChecks:
     description: |
       A JSON dict containing the generic checked types configuration.
       Configuration of each type is specific to that type.
@@ -48,6 +54,7 @@ outputs:
       config_settings:
         map_merge:
           - get_attr: [MonitAgentBase, role_data, config_settings]
-          - monit::checks: {get_param: MonitComputeChecks}
+          - monit::checks: {get_param: MonitVpfaChecks}
+          - monit::httpserver_bind_address: {get_param: MonitVpfaBindAddress}
       step_config: |
         include ::tripleo::profile::base::monit_agent
