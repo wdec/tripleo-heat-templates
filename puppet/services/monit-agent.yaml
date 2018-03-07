@@ -92,6 +92,11 @@ parameters:
     type: boolean
     description: Enable or disable purge of existing config files
     default: false
+  MonitRawConfig:
+    description: |
+      A JSON list containing raw configuration that will be directly placed in the monit configuration
+    type: string
+    default: ''
 
   EndpointMap:
     default: {}
@@ -136,6 +141,7 @@ outputs:
             monit::httpserver_ssl: {get_param: MonitSSL}
             monit::httpserver_pemfile: {get_param: MonitSSLPemFile}
             monit::conf_purge: {get_param: MonitPurgeConfig}
+            tripleo::monit::raw_config: {get_param: MonitRawConfig}
             tripleo.monit_agent.firewall_rules:
               '256 monit agent':
                 dport:

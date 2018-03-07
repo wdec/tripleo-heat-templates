@@ -255,11 +255,19 @@ parameter_defaults:
       }
     }
 
+  ## Raw config added to nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
+  ## Used in to add configuratuon not supported by the puppet module types.
+  MonitVpfaRawConfig: |
+      'check network underlay interface vnet'
+
   ## Check config applied on nodes enabled with the OS::TripleO::Services::MonitAgent role.
   MonitChecks: |
     {
     }
 
+  ## Used in to add configuratuon not supported by the puppet module types.
+  MonitRawConfig: |
+      ''
 
   #####################################
   ### Collectd Agent Configuration  ###

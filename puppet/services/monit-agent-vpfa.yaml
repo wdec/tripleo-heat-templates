@@ -19,6 +19,11 @@ parameters:
       See https://github.com/sbitio/puppet-monit/blob/master/README.md
     type: json
     default: {}
+  MonitVpfaRawConfig:
+    description: |
+      A JSON list containing raw configuration that will be directly placed in the monit configuration
+    type: string
+    default: ''
 
   EndpointMap:
     default: {}
@@ -56,5 +61,6 @@ outputs:
           - get_attr: [MonitAgentBase, role_data, config_settings]
           - monit::checks: {get_param: MonitVpfaChecks}
           - monit::httpserver_bind_address: {get_param: MonitVpfaBindAddress}
+          - tripleo::monit::raw_config: {get_param: MonitVpfaRawConfig}
       step_config: |
         include ::tripleo::profile::base::monit_agent
