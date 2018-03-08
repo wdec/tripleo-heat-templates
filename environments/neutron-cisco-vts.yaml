@@ -358,18 +358,21 @@ parameter_defaults:
           "ReportRelative true",
           "</Plugin>"
         ]
-      },
-      "write_http":
-      {
-        "content":
-        [
-          "<Plugin write_http>",
-          "<Node \"vtfstats\">",
-          "URL \"http://127.0.0.1:55556\"",
-          "Format \"JSON\"",
-          "</Node>",
-          "</Plugin>"
-        ]
       }
     }
+
+  #Sample collectd http writer config
+  #      "write_http":
+  #      {
+  #        "content":
+  #        [
+  #          "<Plugin write_http>",
+  #          "<Node \"vtfstats\">",
+  #          "URL \"http://127.0.0.1:55556\"",
+  #          "Format \"JSON\"",
+  #          "</Node>",
+  #          "</Plugin>"
+  #        ]
+  #      }
+
 
