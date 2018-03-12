@@ -1,0 +1,225 @@
+heat_template_version: pike
+
+description: >
+  OpenStack Neutron Cisco VTS OVS agent configured with Puppet
+  The VTS OVS agent shares parameters with the Cisco VTS ML2 plugin
+  and is assumed to co-exist.
+
+parameters:
+  VTSUsername:
+    default: 'admin'
+    description: The username for the VTS server.
+    type: string
+  VTSPassword:
+    default:
+    type: string
+    description: The password for the VTS server.
+    hidden: true
+  VTSServer:
+    description: VTS Server IP address
+    type: string
+    default: ''
+  VTSVMMID:
+    description: VMM ID used on VTS
+    type: string
+    default: ''
+  VTSPort:
+    description: Port of the VTS Server
+    type: number
+    default: 8888
+  VTSTimeout:
+    description: Timeout for VTS server
+    type: number
+    default: 120
+  VTSPhysicalNet:
+    description: Name of physical network
+    type: string
+    default: ''
+  VTSRetries:
+    description: Max number of retries when connecting to VTS
+    type: number
+    default: 15
+  VTSPollingInterval:
+    description: NCS Polling interval in seconds
+    type: number
+    default: 6
+
+  # Remaining parameters are the same as for the regular OVS agent
+  ServiceData:
+    default: {}
+    description: Dictionary packing service data
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: Mapping of service_name -> network name. Typically set
+                 via parameter_defaults in the resource registry.  This
+                 mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+  RoleName:
+    default: ''
+    description: Role name on which the service is applied
+    type: string
+  RoleParameters:
+    default: {}
+    description: Parameters specific to the role
+    type: json
+  EndpointMap:
+    default: {}
+    description: Mapping of service endpoint -> protocol. Typically set
+                 via parameter_defaults in the resource registry.
+    type: json
+  NeutronEnableL2Pop:
+    type: string
+    description: Enable/disable the L2 population feature in the Neutron agents.
+    default: "False"
+  NeutronBridgeMappings:
+    description: >
+      The OVS logical->physical bridge mappings to use. See the Neutron
+      documentation for details. Defaults to mapping br-ex - the external
+      bridge on hosts - to a physical name 'datacentre' which can be used
+      to create provider networks (and we use this for the default floating
+      network) - if changing this either use different post-install network
+      scripts or be sure to keep 'datacentre' as a mapping network name.
+    type: comma_delimited_list
+    default: "datacentre:br-ex"
+  NeutronTunnelTypes:
+    default: 'vxlan'
+    description: The tunnel types for the Neutron tenant network.
+    type: comma_delimited_list
+  NeutronAgentExtensions:
+    default: "qos"
+    description: |
+        Comma-separated list of extensions enabled for the Neutron agents.
+    type: comma_delimited_list
+  NeutronEnableDVR:
+    default: False
+    description: Enable Neutron DVR.
+    type: boolean
+  NeutronEnableARPResponder:
+    default: false
+    description: |
+      Enable ARP responder feature in the OVS Agent.
+    type: boolean
+  MonitoringSubscriptionNeutronOvs:
+    default: 'overcloud-neutron-ovs-agent'
+    type: string
+  NeutronOVSFirewallDriver:
+    default: ''
+    description: |
+      Configure the classname of the firewall driver to use for implementing
+      security groups. Possible values depend on system configuration. Some
+      examples are: noop, openvswitch, iptables_hybrid. The default value of an
+      empty string will result in a default supported configuration.
+    type: string
+  NeutronOpenVswitchAgentLoggingSource:
+    type: json
+    default:
+      tag: openstack.neutron.agent.openvswitch
+      path: /var/log/neutron/openvswitch-agent.log
+
+conditions:
+  no_firewall_driver: {equals : [{get_param: NeutronOVSFirewallDriver}, '']}
+
+resources:
+
+  NeutronBase:
+    type: ./neutron-base.yaml
+    properties:
+      ServiceData: {get_param: ServiceData}
+      ServiceNetMap: {get_param: ServiceNetMap}
+      DefaultPasswords: {get_param: DefaultPasswords}
+      EndpointMap: {get_param: EndpointMap}
+      RoleName: {get_param: RoleName}
+      RoleParameters: {get_param: RoleParameters}
+
+  Ovs:
+    type: ./openvswitch.yaml
+    properties:
+      ServiceNetMap: {get_param: ServiceNetMap}
+      DefaultPasswords: {get_param: DefaultPasswords}
+      EndpointMap: {get_param: EndpointMap}
+
+  # Merging role-specific parameters (RoleParameters) with the default parameters.
+  # RoleParameters will have the precedence over the default parameters.
+  RoleParametersValue:
+    type: OS::Heat::Value
+    properties:
+      type: json
+      value:
+        map_replace:
+          - map_replace:
+            - neutron::agents::ml2::cisco_vts_agent::bridge_mappings: NeutronBridgeMappings
+            - values: {get_param: [RoleParameters]}
+          - values:
+              NeutronBridgeMappings: {get_param: NeutronBridgeMappings}
+
+
+outputs:
+  role_data:
+    description: Role data for the Cisco Neutron VTS agent service.
+    value:
+      service_name: neutron_cisco_vts_agent
+      monitoring_subscription: {get_param: MonitoringSubscriptionNeutronOvs}
+      logging_source: {get_param: NeutronOpenVswitchAgentLoggingSource}
+      logging_groups:
+        - neutron
+      config_settings:
+        map_merge:
+          - get_attr: [NeutronBase, role_data, config_settings]
+          - get_attr: [RoleParametersValue, value]
+          - neutron::agents::ml2::cisco_vts_agent::l2_population: {get_param: NeutronEnableL2Pop}
+            neutron::agents::ml2::cisco_vts_agent::enable_distributed_routing: {get_param: NeutronEnableDVR}
+            neutron::agents::ml2::cisco_vts_agent::arp_responder: {get_param: NeutronEnableARPResponder}
+            neutron::agents::ml2::ovs::tunnel_types: {get_param: NeutronTunnelTypes}
+            neutron::agents::ml2::ovs::extensions: {get_param: NeutronAgentExtensions}
+            # NOTE: bind IP is found in Heat replacing the network name with the
+            # local node IP for the given network; replacement examples
+            # (eg. for internal_api):
+            # internal_api -> IP
+            # internal_api_uri -> [IP]
+            # internal_api_subnet - > IP/CIDR
+            neutron::agents::ml2::cisco_vts_agent::local_ip: {get_param: [ServiceNetMap, NeutronTenantNetwork]}
+            vts::vts_ip: {get_param: VTSServer}
+            vts::vts_port: {get_param: VTSPort}
+            neutron::agents::ml2::cisco_vts_agent::vts_username: {get_param: VTSUsername}
+            neutron::agents::ml2::cisco_vts_agent::vts_password: {get_param: VTSPassword}
+            neutron::agents::ml2::cisco_vts_agent::vts_vmmid: {get_param: VTSVMMID}
+            neutron::agents::ml2::cisco_vts_agent::vts_timeout: {get_param: VTSTimeout}
+            neutron::agents::ml2::cisco_vts_agent::vts_phys_net: {get_param: VTSPhysicalNet}
+            neutron::agents::ml2::cisco_vts_agent::vts_agent_retries: {get_param: VTSRetries}
+            neutron::agents::ml2::cisco_vts_agent::vts_agent_polling_interval: {get_param: VTSPollingInterval}
+
+            tripleo.neutron_cisco_vts_agent.firewall_rules:
+              '118 neutron vxlan networks':
+                proto: 'udp'
+                dport: 4789
+              '136 neutron gre networks':
+                proto: 'gre'
+          -
+            if:
+            - no_firewall_driver
+            - {}
+            - neutron::agents::ml2::ovs::firewall_driver: {get_param: NeutronOVSFirewallDriver}
+
+      step_config: |
+        include ::tripleo::profile::base::neutron::cisco_vts_agent
+      upgrade_tasks:
+        list_concat:
+          - get_attr: [Ovs, role_data, upgrade_tasks]
+          -
+            - name: Check if neutron_vts_agent_enabled is deployed
+              command: systemctl is-enabled neutron-vts-agent
+              tags: common
+              ignore_errors: True
+              register: neutron_vts_agent_enabled
+            - name: "PreUpgrade step0,validation: Check service neutron-vts-agent is running"
+              shell: /usr/bin/systemctl show 'neutron-vts-agent' --property ActiveState | grep '\bactive\b'
+              when: neutron_vts_agent_enabled.rc == 0
+              tags: step0,validation
+            - name: Stop neutron-vts-agent service
+              tags: step1
+              when: neutron_vts_agent_enabled.rc == 0
+              service: name=neutron-vts-agent state=stopped
