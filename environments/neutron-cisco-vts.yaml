@@ -90,9 +90,8 @@ parameter_defaults:
   VTSR_u_IpAddressList: '10.0.0.1'
   #NetworkNameServerIP: ''
 
-  # Set a common VTS Network Gateway address OR set/override it in PerNodeData parameter below
+  ## Set a common VTS Network Gateway address OR set/override it using the PerNodeData parameter further-on
   #VTSNetworkIPv4Gateway: '10.0.0.1'
-
 
   # VPFA Configuration requires the assignment of an underlay IP address for the VPFA per node.
   # This needs to be specified against the UUID of the target node in a JSON data blob.
@@ -116,6 +115,9 @@ parameter_defaults:
           "cisco_vpfa::vtf_underlay_mask_v4": "24",
           "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"}
     }
+
+  ## Enable/Disable VPFA collection of VPP Stats (defaults to true when not set)
+  #VppStats: True
 
   #####################################
   ### VPP Configuration Parameters  ###
