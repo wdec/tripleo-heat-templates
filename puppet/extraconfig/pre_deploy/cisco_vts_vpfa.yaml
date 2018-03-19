@@ -76,6 +76,7 @@ resources:
 
         # Start of Python script
         # Note: Script relies on bash variable substitution for node_id
+        # DO NOT USE DOUBLE QUOTES IN THE PYTHON CODE!
 
         import ast
         from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
@@ -91,9 +92,9 @@ resources:
         VPFA_INIT = '/etc/vpe/vpfa/vpfa_init.sh'
         DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
         UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
-        HIERA_DATA = '/etc/puppet/hieradata/${node_id}.yaml'
-        HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.yaml'
-        OS_NET_CONF = '/etc/os-net-config/config.json'
+        HIERA_DATA = '/etc/puppet/hieradata/${node_id}.json'
+        HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.json'
+        OS_NET_CONF = '/etc/os-net-config/element_config.json'
         LLDP_CONF = '/etc/vpe/lldp/lldp.conf'
 
         dpdk_data = []
@@ -115,6 +116,8 @@ resources:
               dpdk_data = yaml.load(f)
             except yaml.YAMLError as exc:
               print(exc)
+            except IOError as e:
+              print('DPDK MAP file I/O error: {0}: {1}'.format(e.errno, e.strerror))
 
 
         def mac_underlay_init(env_params, underlay_intf):
@@ -149,7 +152,7 @@ resources:
           node_env = env_params.get('NODE_DATA', {}).get('${node_id}', {})
           with open(HIERA_DATA, 'w') as hierafile:
             try:
-              yaml.safe_dump(node_env, hierafile, default_flow_style=False)
+              json.dump(node_env, hierafile, indent=2)
             except IOError as e:
               print('VPFA Extra Config hiera node data file error: {}'.format(str(e)))
 
@@ -210,7 +213,7 @@ resources:
           # First Check if LLDP is meant to be configured
           with open(HIERA_SERVICE_CONFIG, 'r') as hiera_service_c:
             try:
-              config = yaml.load(hiera_service_c)
+              config = json.load(hiera_service_c)
             except IOError as e:
               print('VPFA Extra Config os-net-config file error: {}'.format(str(e)))
           if 'vts::lldp_enable' in config and config['vts::lldp_enable'] == True:

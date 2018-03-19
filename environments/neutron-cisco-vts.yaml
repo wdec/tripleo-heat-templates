@@ -63,8 +63,8 @@ parameter_defaults:
 
   VTSUsername: 'admin'
   VTSPassword:
-  VTSServer: ''
-  VTSVMMID: ''
+  VTSServer:
+  VTSVMMID:
 
   ###################
   ### Neutron ML2 ###
@@ -129,7 +129,7 @@ parameter_defaults:
   #####################################
 
   ## MTU for Tun/tap interfaces
-  #VppTunTapMtu: '9000'
+  VppTunTapMtu: '9000'
 
   ## The CPUs listed below need to be part of the grub isol CPU list (configured elsewhere)
   #VppCpuMainCoreController: '0'

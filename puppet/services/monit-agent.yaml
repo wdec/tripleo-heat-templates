@@ -65,12 +65,12 @@ parameters:
     default: true
   MonitConfFile:
     type: string
-    description: Alternative monit config file
-    default: ""
+    description: Monit config file
+    default: '/etc/monitrc'
   MonitConfDir:
     type: string
-    description: Alternative monit config dir
-    default: ""
+    description: Monit config dir
+    default: '/etc/monit.d'
   MonitSystemCheck:
     type: string
     description: |

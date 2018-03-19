@@ -90,7 +90,7 @@ parameters:
     description: The tunnel types for the Neutron tenant network.
     type: comma_delimited_list
   NeutronAgentExtensions:
-    default: "qos"
+    default: 'qos'
     description: |
         Comma-separated list of extensions enabled for the Neutron agents.
     type: comma_delimited_list

@@ -28,7 +28,7 @@ parameters:
   VPFAHostname:
     description: (Optional) Name of the VPFA
     type: string
-    default: ''
+    default: '%{::hostname}'
   NetworkConfigMethod:
     description: Network configuration method
     type: string
