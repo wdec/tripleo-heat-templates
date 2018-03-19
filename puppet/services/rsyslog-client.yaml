@@ -1,0 +1,153 @@
+heat_template_version: 2016-04-08
+
+description: >
+  Rsyslog client service configuration.
+
+parameters:
+
+  SyslogServer:
+    description: The syslog server host name or IP.
+    default: ''
+    type: string
+  ServerPort:
+    description: The syslog server port.
+    default: '514'
+    type: string
+  RemoteForwardFormat:
+    description: |
+      Which forward format for remote servers should be used.
+    default: ''
+    type: string
+  LogRemote:
+    description: Log Remotely
+    type: boolean
+    default: false
+  LogLocal:
+    description: Log Locally
+    type: boolean
+    default: true
+  RemoteType:
+    description: Which protocol to use when logging remotely. Valid values; tcp, udp, repl
+    type: string
+    default: 'tcp'
+  ClientLogFilters:
+    description: |
+      An JSON array of hash items defining custom logging filters using the `if/then` configurations parameter.
+      E.g.  [{"expression": "$programname == \"foo\"", "action": "/var/log/foo.log"}]
+    type: json
+    default: []
+  RemoteServers:
+    description: |
+      A JSON data element containing an array of hashes for remote server logging configuration. Overrides
+      SyslogServer if used.
+      Use the RemoteServers JSON parameter for configuring remote servers. The JSON data is meant to be an array of
+      dicts (hashes), with each array item corresponding to a server. RemoteServers overrides SyslogServer
+      See https://github.com/saz/puppet-rsyslog for list of supported dict(hash) keys.
+      E.g.
+      #  [
+      #    {
+      #     "host" : "logs.example.org",
+      #     "port" : "55514",
+      #     "pattern" : "*.log"
+      #    }
+      #  ]
+    default: {}
+    type: json
+  ImFiles:
+    description: |
+      A JSON data element containing a hash of imfile hashes, and their settings
+      Imfiles configuration JSON data. See https://github.com/saz/puppet-rsyslog for list of parameters
+      E.g.
+      # [
+      #   {
+      #     "file_name" : "/var/log/*",
+      #     "file_tag" : "my_tag",
+      #     "file_facility" : "myfacility"
+      #   }
+      # ]
+    default: {}
+    type: json
+  ClientLogTemplates:
+    description: |
+      The LogTemplates JSON data parameter can be used to set up custom logging templates, which can be used for local
+      and/or remote logging. More detail on template formats can be found in the [rsyslog documentation]
+      (http://www.rsyslog.com/doc/rsyslog_conf_templates.html
+    default: {}
+    type: json
+  LogLocal:
+    description: |
+      Enable local logging
+    default: true
+    type: boolean
+  ClientSnippet:
+    description: |
+      JSON blob encapuslating a custom client config snippet. (Unchecked)
+      #{
+      #  "custom_config":
+      #  {
+      #    "content": ""
+      #  }
+      #}
+    default: {}
+    type: json
+
+  ServiceData:
+    default: {}
+    description: Dictionary packing service data
+    type: json
+  RoleName:
+    default: ''
+    description: Role name on which the service is applied
+    type: string
+  RoleParameters:
+    default: {}
+    description: Parameters specific to the role
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+outputs:
+  role_data:
+    description: Role Data for the rsyslog client.
+    value:
+      service_name: rsyslog_client
+      config_settings:
+        map_merge:
+          - rsyslog::client::server: {get_param: SyslogServer}
+            rsyslog::client::port: {get_param: ServerPort}
+            rsyslog::client::remote_forward_format: {get_param: RemoteForwardFormat}
+            rsyslog::client::log_remote: {get_param: LogRemote}
+            rsyslog::client::log_local: {get_param: LogLocal}
+            rsyslog::client::remote_type: {get_param: RemoteType}
+            rsyslog::client::log_filters: {get_param: ClientLogFilters}
+            rsyslog::client::remote_servers: {get_param: RemoteServers}
+            rsyslog::client::imfiles: {get_param: ImFiles}
+            rsyslog::client::log_templates: {get_param: ClientLogTemplates}
+            rsyslog::client::log_local: {get_param: LogLocal}
+
+      step_config:
+        str_replace:
+          template: |
+            include rsyslog::client
+
+            rsyslog::snippet { 'custom_config':
+              ensure => present,
+              content => 'SNIPPET',
+            }
+          params:
+            SNIPPET: {get_param: [ClientSnippet, custom_config, content]}
+

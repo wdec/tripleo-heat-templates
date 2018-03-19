@@ -1,0 +1,99 @@
+heat_template_version: pike
+
+description: >
+  Puppet Collectd agent configuration.
+  Uses puppet/collectd module.
+
+parameters:
+
+  CollectDEnable:
+    default: true
+    description: Enable or disable the collectd agent service.
+    type: boolean
+
+  CollectDManagePackage:
+    default: false
+    description: Enable or disable the collectd package management.
+    type: boolean
+
+  CollectDManageRepo:
+    default: false
+    description: Enable or disable the collectd package management.
+    type: boolean
+
+  CollectDPurge:
+    default: false
+    description: Enable or disable config purging
+    type: boolean
+
+  CollectDInterval:
+    default: 120
+    description: Collection interval
+    type: number
+
+  CollectDPluginConfigs:
+    type: json
+    description: |
+      XML Configuration for each keyed plugin. Multiple config lines split across array entries.
+      Eg. {
+            "some_plugin": {
+              "content": [
+                "<Plugin some_plugin>",
+                "...plugin config...",
+                "</Plugin>"
+              ]
+            },
+            "other_plugin": {
+              "content": [
+                "<Plugin other_plugin>",
+                "...plugin config...",
+                "</Plugin>"
+              ]
+            }
+          }
+    default: {}
+
+  ServiceData:
+    default: {}
+    description: Dictionary packing service data
+    type: json
+  RoleName:
+    default: ''
+    description: Role name on which the service is applied
+    type: string
+  RoleParameters:
+    default: {}
+    description: Parameters specific to the role
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+outputs:
+  role_data:
+    description: Role Data for the Monit agent service.
+    value:
+      service_name: collectd_agent
+      config_settings:
+        map_merge:
+          - collectd::service_enable: {get_param: CollectDEnable}
+          - collectd::manage_repo: {get_param: CollectDManageRepo}
+          - collectd::manage_package: {get_param: CollectDManagePackage}
+          - collectd::interval: {get_param: CollectDInterval}
+            tripleo::collectd:plugin_configs: { get_param: CollectDPluginConfigs}
+            tripleo::collectd:purge: { get_param: CollectDPurge}
+      step_config: |
+        include ::tripleo::profile::base::collectd

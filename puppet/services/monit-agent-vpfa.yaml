@@ -1,0 +1,78 @@
+heat_template_version: pike
+
+description: >
+  Alternative Puppet Monit agent service configuration specific configuration for VPFA nodes.
+  Uses sbitio/puppet-monit.
+
+parameters:
+
+  MonitVpfaBindAddress:
+    description: |
+      Interface address to which the Monit server will bind to. For compute nodes defaults to the VPFA
+      Underlay IP address
+    type: string
+    default: '"%{hiera(\"cisco_vpfa::vtf_underlay_ip_v4\")}"'
+  MonitVpfaChecks:
+    description: |
+      A JSON dict containing the generic checked types configuration.
+      Configuration of each type is specific to that type.
+      See https://github.com/sbitio/puppet-monit/blob/master/README.md
+    type: json
+    default: {}
+  MonitVpfaRawConfig:
+    description: |
+      A JSON list containing raw configuration that will be directly placed in the monit configuration
+    type: string
+    default: ''
+
+  ServiceData:
+    default: {}
+    description: Dictionary packing service data
+    type: json
+  RoleName:
+    default: ''
+    description: Role name on which the service is applied
+    type: string
+  RoleParameters:
+    default: {}
+    description: Parameters specific to the role
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: >
+      Mapping of service_name -> network name. Typically set
+      via parameter_defaults in the resource registry.  This
+      mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  EndpointMap:
+    default: {}
+    description: >
+      Mapping of service endpoint -> protocol. Typically set
+      via parameter_defaults in the resource registry.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+
+resources:
+
+  MonitAgentBase:
+    type: ./monit-agent.yaml
+    properties:
+      ServiceNetMap: {get_param: ServiceNetMap}
+      DefaultPasswords: {get_param: DefaultPasswords}
+      EndpointMap: {get_param: EndpointMap}
+
+outputs:
+  role_data:
+    description: Role Data for the Monit agent service.
+    value:
+      service_name: monit_agent
+      config_settings:
+        map_merge:
+          - get_attr: [MonitAgentBase, role_data, config_settings]
+          - monit::checks: {get_param: MonitVpfaChecks}
+          - monit::httpserver_bind_address: {get_param: MonitVpfaBindAddress}
+          - tripleo::monit::raw_config: {get_param: MonitVpfaRawConfig}
+      step_config: |
+        include ::tripleo::profile::base::monit_agent
