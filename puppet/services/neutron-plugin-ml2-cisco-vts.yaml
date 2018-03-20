@@ -28,6 +28,11 @@ parameters:
     description: Timeout for VTS server
     type: number
     default: 120
+  VTSMaxConcurrentEvents:
+    description: Maximum concurrent events for VTS ML2 driver
+    type: number
+    default: 1
+
   NeutronInterfaceDriver:
   # Newton fix - TODO Remove for Queens
     description: Neutron DHCP interface driver (temporary)
@@ -74,6 +79,7 @@ outputs:
             neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
             neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
             neutron::plugins::ml2::cisco::vts::vts_timeout: {get_param: VTSTimeout}
+            neutron::plugins::ml2::cisco::vts::vts_max_concurrent_events: {get_param: VTSMaxConcurrentEvents}
         # Newton fix - TODO Remove for Queens
             neutron::agents::dhcp::interface_driver: {get_param: NeutronInterfaceDriver}
 
