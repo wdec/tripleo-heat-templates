@@ -338,8 +338,9 @@ parameter_defaults:
         "content":
         [
           "<Plugin interface>",
-          "Interface \"eth0\"",
-          "Interface \"eth1\"",
+          "Interface \"br-ctlplane\"",
+          "Interface \"br-ex\"",
+          "Interface \"br-tenant\"",
           "Interface \"lo\"",
           "IgnoreSelected false",
           "ReportInactive true",
