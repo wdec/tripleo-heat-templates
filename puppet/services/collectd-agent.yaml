@@ -21,6 +21,11 @@ parameters:
     description: Enable or disable the collectd package management.
     type: boolean
 
+  CollectDPackageEnsure:
+    default: 'latest'
+    description: Set the package ensure setting; present, absent, latest
+    type: string
+
   CollectDPurge:
     default: false
     description: Enable or disable config purging
@@ -80,6 +85,7 @@ outputs:
           - collectd::service_enable: {get_param: CollectDEnable}
           - collectd::manage_repo: {get_param: CollectDManageRepo}
           - collectd::manage_package: {get_param: CollectDManagePackage}
+          - collectd::package_ensure: {get_param: CollectDPackageEnsure}
           - collectd::interval: {get_param: CollectDInterval}
             tripleo::collectd:plugin_configs: { get_param: CollectDPluginConfigs}
             tripleo::collectd:purge: { get_param: CollectDPurge}
