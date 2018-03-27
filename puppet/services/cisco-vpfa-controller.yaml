@@ -70,6 +70,10 @@ parameters:
     default: true
     description: Enable VPFA VPP Stats collection
     type: boolean
+  VpfaPackageEnsure:
+    default: 'latest'
+    description: Package ensure setting; present, latest, absent
+    type: string
 
   EndpointMap:
     default: {}
@@ -111,6 +115,7 @@ outputs:
             cisco_vpfa::vtsr_ip_address_list: {get_param: VTSR_u_IpAddressList}
             vts::lldp_enable: {get_param: VTSLldpEnable}
             cisco_vpfa::enable_vpp_stats: {get_param: VppStats}
+            cisco_vpfa::package_ensure: {get_param: VpfaPackageEnsure}
             tripleo.cisco_vpfa.firewall_rules:
               '255 cisco vpfa':
                 dport:
