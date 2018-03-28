@@ -53,11 +53,65 @@ parameters:
   VPFAInit:
     description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
     type: string
-    default: "False"
+    default: 'False'
   PerNodeData:
     description: Per node config data in json format
     type: json
     default: {}
+
+  VTSUpdate:
+    description: VTS Package install/update
+    type: string
+    default: 'false'
+  VTSUpgradeNewPackages:
+    description: List of new packages. Each has to be enclosed by double quotes.
+    type: string
+    default: '
+      "cisco-vts-agent", "python-cisco-controller",
+      "cisco-vts-puppet-neutron", "cisco-vts-puppet-tripleo",
+      "monit", "collectd", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
+      "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
+      "cisco-vts-os-util"'
+  VTSUpgradeNewForgePackages:
+    description: List of new packages from puppet forge. Each has to be enclosed by double quotes.
+    type: string
+    default: '"sbitio-monit --version 1.1.0", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
+    #VTS261
+    #'"sbitio-monit --version 1.1.0"'
+  VTSyumRepos:
+    description: Configuration of VTS package yum repos
+    type: string
+    default: |
+      [cisco2.6.1.vts261]
+      name=cisco2.6.1.vts261
+      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261
+      username=
+      password=
+      enabled = 1
+      gpgcheck = 0
+      metadata_expire = 86400
+
+      [cisco2.6.1.vts261-os-newton]
+      name=cisco2.6.1.vts261-os-newton
+      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261-os-newton
+      username=
+      password=
+      enabled = 1
+      gpgcheck = 0
+      metadata_expire = 86400
+
+  RepoProxy:
+    description: HTTP/HTTPS proxy configuration.
+    type: string
+    default: 'http://proxy.esl.cisco.com:8080/'
+  VTSversion:
+    description: Current VTS version
+    type: string
+    default: '2.6.1'
+  VTS_previous_version:
+    description: Previous VTS version. Used in upgrade logic
+    type: string
+    default: '2.6.0'
 
 # Install of vpfa_init.sh and dpdk_nic_bind.py is required to carry out the configuration using script.
 resources:
@@ -70,12 +124,13 @@ resources:
       config: |
         #!/bin/bash
         node_id=$(dmidecode --s system-uuid | uniq)
+        mkdir -p /var/log/vpfa/
         # Comment out the redirect line when running the script locally
         echo $vpp_conf > /tmp/conf_in
         echo $vpp_conf | python -c "
 
         # Start of Python script
-        # Note: Script relies on bash variable substitution for node_id
+        # NOTE: Script relies on bash variable substitution for $node_id
 
         import ast
         from ConfigParser import SafeConfigParser, NoOptionError, NoSectionError
@@ -110,11 +165,18 @@ resources:
 
         def load_dpdk_data(file):
           global dpdk_data
-          with open(file) as f:
-            try:
-              dpdk_data = yaml.load(f)
-            except yaml.YAMLError as exc:
-              print(exc)
+          try:
+            f = open(file)
+          except IOError as e:
+            print('DPDK data load error: {}'.format(str(e)))
+          else:
+            with f:
+              try:
+                dpdk_data = yaml.load(f)
+              except yaml.YAMLError as exc:
+                print(exc)
+              finally:
+                f.close()
 
 
         def mac_underlay_init(env_params, underlay_intf):
@@ -277,7 +339,10 @@ resources:
         print(time.strftime('%c'))
         print('*****************************************\n')
 
-        input = sys.stdin.readline() or '{}'
+        input = sys.stdin.readline()
+        if input in ['\n', '\r']:
+          print('No vpfa input passed. Skipping VTS Extra Pre Deployment script run.')
+          sys.exit()
         input = ast.literal_eval(input)
         env_params = dict()
         for i in input:
@@ -335,6 +400,106 @@ resources:
             - BOND_IF_LIST: {get_param: BondIfList }
             - UNDERLAY_IP_NET_LIST: {get_param: UnderlayIpNewtorksList}
             - VPFA_INIT: {get_param: VPFAInit}
+
+  VTSUpgradeScript:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: puppet
+      inputs:
+        - name: vts_current_version
+        - name: vts_previous_version
+        - name: vts_package_up
+      config:
+        str_replace:
+          # PARTS OF THIS SCRIPT NEED TO BE ADAPTED TO EACH VTS VERSION
+          # VTS 2.6.1
+          # Puppet < 4.8 doesn't support configuring credentials in yum repo module, so need to create a repo file
+          # Injecting puppet parameter settings via the environment has an issue with multiline strings, hence
+          # using template and string substitution
+          template: |
+            # Sourced from cisco_vts_vpfa.yaml
+            
+            define install_puppet_mods() {
+              exec { $name:
+                environment => ['http_proxy=REPOPROXY', 'https_proxy=REPOPROXY'],
+                path        => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
+                command     => "puppet module install ${name}",
+              }
+            }
+            
+            if $::vts_package_up == 'true' {
+              file {'new VTS repo':
+                path    => "/etc/yum.repos.d/${::vts_current_version}.cisco_vts.repo",
+                ensure  => 'present',
+                content => "VTS_YUM_REPOS",
+              }
+
+              tidy {'remove previous VTS repos':
+                path    => "/etc/yum.repos.d/",
+                matches => ["${::vts_previous_version}*.repo"],
+                recurse => 1,
+              }
+
+              install_puppet_mods{ [FORGEPACKAGES] : }
+
+              package { [YUMPACKAGES] :
+                ensure    => 'latest',
+                subscribe => File['new VTS repo']
+              }
+
+              #Fixup OSPD10 image issue
+
+              file {'/etc/puppet/modules/collectd':
+                ensure => 'link',
+                target => '/etc/puppet/modules/module-collectd/',
+              }
+
+              #exec {'Disable non-default services':
+              #  path       => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
+              #  #Ignore errors by setting last command to true
+              #  command    => 'systemctl disable neutron-vts-agent; systemctl disable vpp; systemctl disable vpfa;
+              #                  true',
+              #  }
+
+              service {'lldpd':
+                ensure => running,
+                enable => true,
+              }
+
+              service {'neutron-vts-agent':
+                enable => false,
+                ensure => stopped,
+              }
+
+              service {'vpfa':
+                enable => false,
+                ensure => stopped,
+              }
+
+              exec {'Patch os-refresh-config':
+                path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
+                command => 'sed -i.bak \'s/-v \^lo\$/-v -e \^lo\$ -e \^vnet\$/\' /usr/libexec/os-refresh-config/configure.d/20-os-net-config',
+              }
+            }
+
+          params:
+            VTS_YUM_REPOS: {get_param: VTSyumRepos}
+            FORGEPACKAGES: {get_param: VTSUpgradeNewForgePackages }
+            YUMPACKAGES: {get_param: VTSUpgradeNewPackages }
+            REPOPROXY: {get_param: RepoProxy}
+
+
+  VTSUpgrade:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      name: Cisco_VTS_Upgrade
+      server:  {get_param: server}
+      config: {get_resource: VTSUpgradeScript}
+      actions: ['CREATE','UPDATE']
+      input_values:
+        vts_package_up: {get_param: VTSUpdate}
+        vts_current_version: {get_param: VTSversion}
+        vts_previous_version: {get_param: VTS_previous_version}
 
 outputs:
   deploy_stdout:
