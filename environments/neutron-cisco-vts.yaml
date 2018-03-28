@@ -1,4 +1,5 @@
-# A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
+## A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
+# vts 2.6.1
 
 # By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
@@ -50,7 +51,13 @@ resource_registry:
   ## Collectd agent service
   OS::TripleO::Services::CollectDAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/collectd-agent.yaml
 
+  ## VTS Version Upgrade service
+  OS::TripleO::Services::VTSversionUpgrade: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vts-package-upgrader.yaml
+
 parameter_defaults:
+
+  ## Current VTS version
+  VTSversion: "2.6.1"
 
   ###################
   ### VTS General ###
@@ -137,6 +144,34 @@ parameter_defaults:
   ## Avoid dumping vhost-user shared memory segments to core files
   #VppVhostUserDontDumpMem: false
 
+  ########################
+  ### VTS Update Info  ###
+  ########################
+
+  VTSUpdate: 'true'
+
+  ## VTS Yum Repo settings
+#  VTSyumRepos: |
+#      [2.6.1.vts261]
+#      name=2.6.1.vts261
+#      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261
+#      username=
+#      password=
+#      enabled = 1
+#      gpgcheck = 0
+#      metadata_expire = 86400
+#
+#      [2.6.1.vts261-os-newton]
+#      name=2.6.1.vts261-os-newton
+#      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261-os-newton
+#      username=
+#      password=
+#      enabled = 1
+#      gpgcheck = 0
+#      metadata_expire = 86400
+
+  ## Repository Proxy Settings
+#  RepoProxy: 'http://<some proxy>:8080/'
 
   ##########################################
   ### VPFA rSyslog Client Configuration  ###
@@ -258,7 +293,7 @@ parameter_defaults:
     }
 
   ## Raw config added to nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
-  ## Used in to add configuratuon not supported by the puppet module types.
+  ## Used in to add configuration not supported by the puppet module types.
   MonitVpfaRawConfig: |
       'check network underlay interface vnet'
 
@@ -267,7 +302,7 @@ parameter_defaults:
     {
     }
 
-  ## Used in to add configuratuon not supported by the puppet module types.
+  ## Used in to add configuration not supported by the puppet module types.
   MonitRawConfig: |
       ''
 
@@ -287,6 +322,7 @@ parameter_defaults:
   ## CollectD Plugin configurations
   ## Each named plugin should have its own named dict entry, followed by a "content" element containing the
   ## plugin's XML configuration stanza, in JSON list format.
+  ## The configuration content is the native collectd configuration for the plugin
   CollectDPluginConfigs: |
     {
       "memory":
