@@ -2,7 +2,7 @@ heat_template_version: 2016-04-08
 
 description: >
   Puppet Monit agent configuration.
-  Uses sbitio/puppet-monit.
+  Uses echoes/puppet-monit.
 
 parameters:
 
@@ -122,31 +122,32 @@ outputs:
     value:
       service_name: monit_agent
       config_settings:
-            tripleo::monit_agent::user: {get_param: MonitUser}
-            tripleo::monit_agent::password: {get_param: MonitPassword}
-            monit::service_enable: {get_param: MonitEnable}
-            monit::service_ensure: {get_param: MonitEnsure}
-            monit::httpserver: {get_param: MonitHttpServer}
-            monit::httpserver_bind_address: {get_param: MonitBindAddress}
-            monit::httpserver_port: {get_param: MonitHttpServerPort}
-            tripleo::monit::allow: {get_param: MonitAllow}
-            monit::checks: {get_param: MonitChecks}
-            monit::check_interval: {get_param: MonitCheckInterval}
-            monit::check_start_delay: {get_param: MonitStartDelay}
-            monit::eventqueue: {get_param: MonitEventqueue}
-            monit::conf_file: {get_param: MonitConfFile}
-            monit::conf_dir: {get_param: MonitConfDir}
-            monit::system_check_ensure: {get_param: MonitSystemCheck}
-            monit::logfile: {get_param: MonitLogFile}
-            monit::httpserver_ssl: {get_param: MonitSSL}
-            monit::httpserver_pemfile: {get_param: MonitSSLPemFile}
-            monit::conf_purge: {get_param: MonitPurgeConfig}
-            tripleo::monit::raw_config: {get_param: MonitRawConfig}
-            tripleo.monit_agent.firewall_rules:
-              '256 monit agent':
-                dport:
-                  - {get_param: MonitHttpServerPort}
-                proto: tcp
-                action: accept
+        tripleo::monit_agent::user: {get_param: MonitUser}
+        tripleo::monit_agent::password: {get_param: MonitPassword}
+        monit::service_enable: {get_param: MonitEnable}
+        monit::service_ensure: {get_param: MonitEnsure}
+        monit::httpd: {get_param: MonitHttpServer}
+        monit::httpd_address: {get_param: MonitBindAddress}
+        monit::httpd_port: {get_param: MonitHttpServerPort}
+        monit::check_interval: {get_param: MonitCheckInterval}
+        monit::start_delay: {get_param: MonitStartDelay}
+        monit::config_file: {get_param: MonitConfFile}
+        monit::config_dir: {get_param: MonitConfDir}
+        monit::logfile: {get_param: MonitLogFile}
+        monit::httpd_ssl: {get_param: MonitSSL}
+        monit::httpd_pemfile: {get_param: MonitSSLPemFile}
+        tripleo::monit::raw_config: {get_param: MonitRawConfig}
+        monit::config_dir_purge: {get_param: MonitPurgeConfig}
+        ##LEGACY sbit-io. TO BE REMOVED
+        tripleo::monit::allow: {get_param: MonitAllow}
+        monit::checks: {get_param: MonitChecks}
+        #monit::eventqueue: {get_param: MonitEventqueue}
+        #monit::system_check_ensure: {get_param: MonitSystemCheck}
+        tripleo.monit_agent.firewall_rules:
+          '256 monit agent':
+            dport:
+              - {get_param: MonitHttpServerPort}
+            proto: tcp
+            action: accept
       step_config: |
         include ::tripleo::profile::base::monit_agent

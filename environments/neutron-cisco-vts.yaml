@@ -233,6 +233,7 @@ parameter_defaults:
   # MonitCheckInterval: 30
 
   ## Monit Check config applied on nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
+  ## LEGACY sbitio module
   MonitVpfaChecks: |
     {
     "vpp":
@@ -260,7 +261,11 @@ parameter_defaults:
   ## Raw config added to nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
   ## Used in to add configuratuon not supported by the puppet module types.
   MonitVpfaRawConfig: |
-      'check network underlay interface vnet'
+      'check network underlay interface vnet
+      check process vpp with matching "/usr/bin/vpp"
+            mode passive
+      check process vpfa with matching vpfa_restconf_server
+            mode passive'
 
   ## Check config applied on nodes enabled with the OS::TripleO::Services::MonitAgent role.
   MonitChecks: |
