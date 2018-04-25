@@ -1,0 +1,24 @@
+heat_template_version: 2016-04-08
+description: |
+  'Extra Pre-Deployment Config wrapper with Cisco VTF Install Configuration, *and* RHEL Registration'
+parameters:
+  server:
+    type: string
+
+resources:
+  RHELRegistration:
+    type: ../../../extraconfig/pre_deploy/rhel-registration/rhel-registration.yaml
+    properties:
+      server: {get_param: server}
+
+  VTSUpgrade:
+    type: cisco_vts_packages.yaml
+    depends_on: [RHELRegistration]
+    properties:
+      server: {get_param: server}
+
+  VTSExtraConfigPre:
+    type: cisco_vts_vpfa.yaml
+    depends_on: [VTSUpgrade]
+    properties:
+      server: {get_param: server}
