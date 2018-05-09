@@ -12,7 +12,7 @@ parameters:
   VTSversion:
     description: Current VTS version
     type: string
-    default: '2.6.1'
+    default: '2.6.2'
   VTS_previous_version:
     description: Previous VTS version. Used in upgrade logic
     type: string
@@ -34,23 +34,23 @@ parameters:
   VTSUpgradeNewForgePackages:
     description: List of new packages from puppet forge. Each has to be enclosed by double quotes.
     type: string
-    default: '"puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
+    default: '"echoes-monit --version 1.1.2", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
   VTSyumRepos:
     description: Configuration of VTS package yum repos
     type: string
     default: |
-      [cisco2.6.1.vts261]
-      name=cisco2.6.1.vts261
-      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261
+      [cisco2.6.2.vts262]
+      name=cisco2.6.2.vts262
+      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262
       username=
       password=
       enabled = 1
       gpgcheck = 0
       metadata_expire = 86400
 
-      [cisco2.6.1.vts261-os-pike]
+      [cisco2.6.2.vts262-os-pike]
       name=cisco2.6.1.vts261-os-pike
-      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/tbr__2.6.1.vts261dev-os-pike
+      baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-pike
       username=
       password=
       enabled = 1

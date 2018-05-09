@@ -134,8 +134,8 @@ outputs:
     value:
       service_name: monit_agent
       config_settings:
-        tripleo::monit_agent::user: {get_param: MonitUser}
-        tripleo::monit_agent::password: {get_param: MonitPassword}
+        monit::httpd_user: {get_param: MonitUser}
+        monit::httpd_password: {get_param: MonitPassword}
         monit::service_enable: {get_param: MonitEnable}
         monit::service_ensure: {get_param: MonitEnsure}
         monit::httpd: {get_param: MonitHttpServer}
