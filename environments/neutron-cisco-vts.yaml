@@ -57,7 +57,7 @@ resource_registry:
 parameter_defaults:
 
   ## Current VTS version
-  VTSversion: "2.6.1"
+  VTSversion: "2.6.2"
 
   ###################
   ### VTS General ###
@@ -152,26 +152,26 @@ parameter_defaults:
 
   ## VTS Yum Repo settings
 #  VTSyumRepos: |
-#      [2.6.1.vts261]
-#      name=2.6.1.vts261
-#      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261
-#      username=
-#      password=
-#      enabled = 1
-#      gpgcheck = 0
-#      metadata_expire = 86400
+#    [cisco2.6.2.vts262]
+#    name=cisco2.6.2.vts262
+#    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262
+#    username=
+#    password=
+#    enabled = 1
+#    gpgcheck = 0
+#    metadata_expire = 86400
 #
-#      [2.6.1.vts261-os-newton]
-#      name=2.6.1.vts261-os-newton
-#      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261-os-newton
-#      username=
-#      password=
-#      enabled = 1
-#      gpgcheck = 0
-#      metadata_expire = 86400
+#    [cisco2.6.2.vts262-os-pike]
+#    name=cisco2.6.2.vts261-os-pike
+#    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-pike
+#    username=
+#    password=
+#    enabled = 1
+#    gpgcheck = 0
+#    metadata_expire = 86400
 
   ## Repository Proxy Settings
-#  RepoProxy: 'http://<some proxy>:8080/'
+#  RepoProxy: 'http://proxy.esl.cisco.com:8080/'
 
   ##########################################
   ### VPFA rSyslog Client Configuration  ###

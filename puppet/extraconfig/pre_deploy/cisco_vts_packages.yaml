@@ -60,7 +60,7 @@ parameters:
   RepoProxy:
     description: HTTP/HTTPS proxy configuration.
     type: string
-    default: 'http://proxy.esl.cisco.com:8080/'
+    default: ''
 
 conditions:
   dont_update:
