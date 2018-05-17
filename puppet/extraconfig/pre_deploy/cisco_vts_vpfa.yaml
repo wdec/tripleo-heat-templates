@@ -1,0 +1,100 @@
+#
+# Copyright (C) 2017 cisco Inc.
+#
+# Author: Wojciech Dec <wdec@cisco.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License. You may obtain
+# a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+heat_template_version: 2016-10-14
+
+description: Generate Cisco VTS VTF/VPFA configuration extras
+
+parameters:
+  server:
+    description: ID of the controller node to apply this config to
+    type: string
+
+  # VPPparams this needs to be a json blob e.g:
+  #      parameter_defaults:
+  #        VPPparams: |
+  #          {"ENABLE_VPP_WORKERS": True,
+  #           "PCI_DRIVER": "vfio_pci"}
+  VPPparams:
+    type: json
+    default: {}
+    description: |
+      json object containing VPP configuration map for VPFA Init script
+      e.g.:
+          VPPparams: |
+            {"ENABLE_VPP_WORKERS": True,
+            "PCI_DRIVER": "vfio_pci"}
+  UnderlayInterface:
+    description: Name of underlay interface or bond mode
+    type: string
+    default: ''
+  BondIfList:
+    description: (Optional) List of underlay interfaces to bond
+    type: comma_delimited_list
+    default: ''
+  UnderlayIpNewtorksList:
+    description: List of other underlay networks reachable through the underlay interface
+    type: comma_delimited_list
+    default: ''
+  VPFAInit:
+    description: Flag to control generation of VPFA config. Set to False if using the OSPD VPP Module.
+    type: string
+    default: 'False'
+  PerNodeData:
+    description: Per node config data in json format
+    type: json
+    default: {}
+
+conditions:
+  create_vtf_config:
+    not:
+      equals:
+      - get_param: PerNodeData
+      - {}
+
+# Install of vpfa_init.sh and dpdk_nic_bind.py from the vts_utils rpm is required to carry out the configuration when
+# VPFA_INIT is set to True
+resources:
+  VTSExtraConfigPre:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      inputs:
+      - name: vpp_conf
+      config:
+        get_file: vtf_config.sh
+
+  VTSExtraDeploymentPre:
+    type: OS::Heat::SoftwareDeployment
+    properties:
+      name: Cisco_VPFA_ExtraConfig
+      config: {get_resource: VTSExtraConfigPre}
+      server: {get_param: server}
+      actions: ['CREATE','UPDATE']
+      input_values:
+        vpp_conf:
+            - NODE_DATA: {get_param: PerNodeData}
+            - VPP_PARAMS: {get_param: VPPparams}
+            - UNDERLAY_IF_NAME: {get_param: UnderlayInterface}
+            - BOND_IF_LIST: {get_param: BondIfList }
+            - UNDERLAY_IP_NET_LIST: {get_param: UnderlayIpNewtorksList}
+            - VPFA_INIT: {get_param: VPFAInit}
+
+outputs:
+  deploy_stdout:
+    description: VTS Extra configuration invoking shell script on changes
+    value: {get_attr: [VTSExtraDeploymentPre, deploy_stdout]}

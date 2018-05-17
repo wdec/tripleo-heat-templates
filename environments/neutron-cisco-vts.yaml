@@ -1,0 +1,427 @@
+## A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
+# vts 2.6.1
+
+# By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
+
+# Pike dockerized version
+
+resource_registry:
+
+  ## Base Neutron ML2 definitions for VTS
+  OS::TripleO::Services::NeutronCorePluginVTS: /usr/share/openstack-tripleo-heat-templates/docker/services/neutron-plugin-ml2-cisco-vts.yaml
+  OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+
+  #DockerNeutronApiImage: 'kolla/centos-binary-neutron-cisco-vts'
+  #DockerNeutronConfigImage: 'kolla/centos-binary-neutron-cisco-vts'
+
+  ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
+  OS::TripleO::Services::ComputeNeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+
+  ## Disable Neutron L3 agent that conflict with VPFA
+  OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+
+  ## OVS and VTS Agent sub-section ##
+
+  ## Disable/enable the default OVS Agent for compute and controller
+  OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
+  OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
+
+  ## Disable/enable VTS agent service. VTS agent and OVS agent are mutually exclusive
+  ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
+  OS::TripleO::Services::VTSAgent: /usr/share/openstack-tripleo-heat-templates/docker/services/neutron-cisco-vts-agent.yaml
+
+  ## VPFA Configuration Hook scripts
+  OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  ## Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
+  OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  ## Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
+  #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+
+  ## Rsyslog client
+  OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
+
+  ## VPP Service(s)
+  OS::TripleO::Services::Vpp: OS::Heat::None
+  OS::TripleO::Services::VppCompute: /usr/share/openstack-tripleo-heat-templates/puppet/services/vpp-compute.yaml
+  OS::TripleO::Services::VppController: /usr/share/openstack-tripleo-heat-templates/puppet/services/vpp-controller.yaml
+  OS::TripleO::Services::CiscoVpfaCompute: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vpfa-compute.yaml
+  OS::TripleO::Services::CiscoVpfaController: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vpfa-controller.yaml
+
+  ## Monit agent service(s)
+  OS::TripleO::Services::MonitAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent.yaml
+  OS::TripleO::Services::MonitVpfaAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/monit-agent-vpfa.yaml
+
+  ## Collectd agent service
+  OS::TripleO::Services::CollectDAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/collectd-agent.yaml
+
+  ## VTS Version Upgrade service
+  OS::TripleO::Services::VTSversionUpgrade: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vts-package-upgrader.yaml
+
+parameter_defaults:
+
+  ## Current VTS version
+  VTSversion: "2.6.1"
+
+  ###################
+  ### VTS General ###
+  ###################
+
+  VTSUsername: 'admin'
+  VTSPassword:
+  VTSServer:
+  VTSVMMID:
+
+  ###################
+  ### Neutron ML2 ###
+  ###################
+
+  NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
+  NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
+  NeutronTypeDrivers: 'vxlan,vlan,flat'
+  NeutronServicePlugins: 'cisco_vts_router,trunk'
+
+  ## DHCP Agent interface driver. Uncomment ONLY if/when deploying VPP on the controller node(s).
+  #NeutronInterfaceDriver: 'cisco_controller.drivers.agent.linux.interface.NamespaceDriver'
+
+  ########################
+  ### VTS Agent Config ###
+  ########################
+
+  VTSPhysicalNet: ''
+  #VTSRetries: 15
+  #VTSTimeout:
+  #VTSPollingInterval: 6
+
+  ###################
+  ### VPFA Config ###
+  ###################
+
+  UnderlayIpNewtorksList: '11.0.0.1/24'
+  VTSR_u_IpAddressList: '10.0.0.1'
+  #NetworkNameServerIP: ''
+
+  ## Set a common VTS Network Gateway address OR set/override it using the PerNodeData parameter further-on
+  #VTSNetworkIPv4Gateway: '10.0.0.1'
+
+  # VPFA Configuration requires the assignment of an underlay IP address for the VPFA per node.
+  # This needs to be specified against the UUID of the target node in a JSON data blob.
+  # To derive the UUID, after node introspection execute the following CLI command steps:
+  #
+  # 1. 'ironic node-list'. Note Openstack ID of the target node
+  # 2. 'openstack baremetal introspection data save <Openstack ID from step1> | jq .extra.system.product.uuid
+  # 3. Note the Node UUID and use it in the json configuration blob below. Multiple nodes can be specified.
+  #
+  # The per-node data can be used to set/override any of the cisco_vpfa:: module configuration parameters
+  #
+
+  PerNodeData: |
+    {
+      "< Node1 UUID >": {
+          "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.2",
+          "cisco_vpfa::vtf_underlay_mask_v4": "24",
+          "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"},
+      "< Node2 UUID >": {
+          "cisco_vpfa::vtf_underlay_ip_v4": "10.0.0.3",
+          "cisco_vpfa::vtf_underlay_mask_v4": "24",
+          "cisco_vpfa::network_ipv4_gateway": "10.0.0.1"}
+    }
+
+  ## Enable/Disable VPFA collection of VPP Stats (defaults to true when not set)
+  #VppStats: True
+
+  #####################################
+  ### VPP Configuration Parameters  ###
+  #####################################
+
+  ## MTU for Tun/tap interfaces
+  VppTunTapMtu: '9000'
+
+  ## The CPUs listed below need to be part of the grub isol CPU list (configured elsewhere)
+  #VppCpuMainCoreController: '0'
+  #VppCpuMainCoreCompute: '0'
+
+  ## Comma delimited workers list
+  #VppCpuCorelistWorkersCompute: ''
+  #VppCpuCorelistWorkersController: ''
+
+  ## Avoid dumping vhost-user shared memory segments to core files
+  #VppVhostUserDontDumpMem: false
+
+  ########################
+  ### VTS Update Info  ###
+  ########################
+
+  VTSUpdate: 'true'
+
+  ## VTS Yum Repo settings
+#  VTSyumRepos: |
+#      [2.6.1.vts261]
+#      name=2.6.1.vts261
+#      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261
+#      username=
+#      password=
+#      enabled = 1
+#      gpgcheck = 0
+#      metadata_expire = 86400
+#
+#      [2.6.1.vts261-os-newton]
+#      name=2.6.1.vts261-os-newton
+#      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.1.vts261-os-newton
+#      username=
+#      password=
+#      enabled = 1
+#      gpgcheck = 0
+#      metadata_expire = 86400
+
+  ## Repository Proxy Settings
+#  RepoProxy: 'http://<some proxy>:8080/'
+
+  ##########################################
+  ### VPFA rSyslog Client Configuration  ###
+  ##########################################
+
+  # IMPORTANT: Add OS::TripleO::Services::RSyslogClient to the role data catalogue for the service config to come into
+  # effect
+
+  # ****** EDIT the syslog server <IP ADDRESS> and <PORT> in ClientLogFilters and add/remove entries as needed! *******
+  # The default template below configures UDP servers on port 514. UDP is denoted by a single @ sign. To add a TCP
+  # server, add an extra stanza prefixing with @@ the server's IP address
+
+  ClientLogFilters: |
+    [
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'crit'",
+        "action": "@[<IP ADDRESS>]:<PORT>;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'err'",
+        "action": "@[<IP ADDRESS>]:<PORT>;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'warning'",
+        "action": "@[<IP ADDRESS>]:<PORT>;forwardFormat"
+      },
+      {
+        "expression": "$syslogfacility-text == 'local3' and $syslogseverity-text == 'info'",
+        "action": "@[<IP ADDRESS>]:<PORT>;forwardFormat"
+      }
+    ]
+
+  # Cisco VPFA default log and priority settings
+  ImFiles: |
+   {
+    "10-vpfa_error_log": {
+      "file_name": "/var/log/vpfa/vpfa_server_errors.log",
+      "file_tag": "vpfa",
+      "file_severity": "err",
+      "file_facility": "local3"
+      },
+    "10-vpfa_warning_log": {
+      "file_name": "/var/log/vpfa/vpfa_server_warning.log",
+      "file_tag": "vpfa",
+      "file_severity": "warning",
+      "file_facility": "local3"
+      },
+     "10-vpfa_critical_log": {
+      "file_name": "/var/log/vpfa/vpfa_server_critical.log",
+      "file_tag": "vpfa",
+      "file_severity": "critical",
+      "file_facility": "local3"
+      },
+     "10-vpfa_info_log": {
+      "file_name": "/var/log/vpfa/vpfa_server.log",
+      "file_tag": "vpfa",
+      "file_severity": "info",
+      "file_facility": "local3"
+      }
+    }
+
+  ClientLogTemplates: |
+    [
+      {
+        "name": "forwardFormat",
+        "template": "<%PRI%>%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag:1:32%%msg:::sp-if-no-1st-sp%%msg%"
+      }
+    ]
+
+
+  ##################################
+  ### Monit Agent Configuration  ###
+  ##################################
+
+  # IMPORTANT: To enable the Monit Agent config, add the VPFA specific "OS::TripleO::Services::MonitVpfaAgent"
+  # or generic "OS::TripleO::Services::MonitAgent" to the corresponding nodes role data configuration.
+
+
+  ## General settings. Applied to all Monit Agents
+  ## Credentials
+  MonitUser: ''
+  MonitPassword:
+  MonitSSLPemFile: '/etc/ssl/certs/monit.pem'
+
+  ## VPFA Monit node bind IP address - when unset, defaults to use underlay IP of the VPFA
+  #MonitVpfaBindAddress:
+  ## Generic node's monit server bind IP address - when unset, defaults to the management IP of the node.
+  #MonitBindAddress:
+
+  ## Monit server port
+  #MonitHttpServerPort: 2812
+
+  ## Monit check interval
+  # MonitCheckInterval: 30
+
+  ## Monit Check config applied on nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
+  ## LEGACY sbitio module
+  MonitVpfaChecks: |
+    {
+    "vpp":
+      {
+      "type": "process",
+      "config":
+        {
+        "matching": "vpp",
+        "program_start": "/sbin/service vpp start",
+        "program_stop": "/sbin/service vpp stop"
+        }
+      },
+    "vpfa":
+      {
+      "type": "process",
+      "config":
+        {
+        "matching": "vpfa_restconf_server",
+        "program_start": "/sbin/service vpfa start",
+        "program_stop": "/sbin/service vpfa stop"
+        }
+      }
+    }
+
+  ## Raw config added to nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
+  ## Used in to add configuration not supported by the puppet module types.
+  MonitVpfaRawConfig: |
+      check network underlay interface vnet
+      check process vpp with matching "/usr/bin/vpp"
+            mode passive
+      check process vpfa with matching vpfa_restconf_server
+            mode passive
+
+  ## Check config applied on nodes enabled with the OS::TripleO::Services::MonitAgent role.
+  MonitChecks: |
+    {
+    }
+
+  ## Used in to add configuration not supported by the puppet module types.
+  MonitRawConfig: |
+      ''
+
+  #####################################
+  ### Collectd Agent Configuration  ###
+  #####################################
+
+  # IMPORTANT: To enable the Collectd Agent config, add the  "OS::TripleO::Services::CollectDAgent"
+
+
+  ##Enable or disable collectd (default is true)
+  # CollectDEnable: true
+
+  ## Purge default/previous configurations
+  CollectDPurge: true
+
+  ## CollectD Plugin configurations
+  ## Each named plugin should have its own named dict entry, followed by a "content" element containing the
+  ## plugin's XML configuration stanza, in JSON list format.
+  ## The configuration content is the native collectd configuration for the plugin
+  CollectDPluginConfigs: |
+    {
+      "memory":
+      {
+        "content":
+        [
+        "<Plugin memory>",
+          "ValuesAbsolute true",
+          "ValuesPercentage false",
+        "</Plugin>"
+        ]
+      },
+      "cpu":
+      {
+        "content":
+        [
+          "<Plugin cpu>",
+             "ReportByCpu true",
+             "ReportByState true",
+             "ValuesPercentage false",
+             "ReportNumCpu false",
+             "ReportGuestState false",
+             "SubtractGuestState true",
+           "</Plugin>"
+        ]
+      },
+      "python":
+      {
+        "content":
+        [
+          "<Plugin python>",
+          "ModulePath \"/opt/cisco/vpe/collectd/\"",
+          "LogTraces true",
+          "Import \"cisco-vpfa-collectd-plugin\"",
+          "</Plugin>"
+        ]
+      },
+      "write_log":
+      {
+        "content":
+        [
+          "<Plugin write_log>",
+          "Format JSON",
+          "</Plugin>"
+        ]
+      },
+      "interface":
+      {
+        "content":
+        [
+          "<Plugin interface>",
+          "Interface \"br-ctlplane\"",
+          "Interface \"br-ex\"",
+          "Interface \"br-tenant\"",
+          "Interface \"lo\"",
+          "IgnoreSelected false",
+          "ReportInactive true",
+          "UniqueName false",
+          "</Plugin>"
+        ]
+      },
+      "disk":
+      {
+        "content":
+        []
+      },
+      "load":
+      {
+        "content":
+        [
+          "<Plugin load>",
+          "ReportRelative true",
+          "</Plugin>"
+        ]
+      }
+    }
+
+  #Sample collectd http writer config
+  #      "write_http":
+  #      {
+  #        "content":
+  #        [
+  #          "<Plugin write_http>",
+  #          "<Node \"vtfstats\">",
+  #          "URL \"http://127.0.0.1:55556\"",
+  #          "Format \"JSON\"",
+  #          "</Node>",
+  #          "</Plugin>"
+  #        ]
+  #      }
+
+
