@@ -67,6 +67,7 @@ parameter_defaults:
   VTSPassword:
   VTSServer: ''
   VTSVMMID: ''
+  VTSSiteId: ''
 
   ###################
   ### Neutron ML2 ###
