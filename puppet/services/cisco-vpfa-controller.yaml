@@ -71,7 +71,7 @@ parameters:
     description: Enable VPFA VPP Stats collection
     type: boolean
   VpfaPackageEnsure:
-    default: 'latest'
+    default: 'present'
     description: Package ensure setting; present, latest, absent
     type: string
 

@@ -171,7 +171,7 @@ resources:
                 exec {'Patch os-refresh-config':
                 #TODO: wdec - remove for Queens
                   path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
-                  command => 'sed -i.bak \'s/-v \^lo\$/-v -e \^lo\$ -e \^vnet\$/\' /usr/libexec/os-refresh-config/configure.d/20-os-net-config',
+                  command => 'sed -i.bak \'s/-v \^lo\$/-v -e \^lo\$ -e \^vnet\$/\' /usr/libexec/os-refresh-config/configure.d/20-os-net-config; true',
                 }
               }
             }
