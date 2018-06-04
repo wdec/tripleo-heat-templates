@@ -30,14 +30,8 @@ resource_registry:
   ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
   OS::TripleO::Services::VTSAgent: /usr/share/openstack-tripleo-heat-templates/docker/services/neutron-cisco-vts-agent.yaml
 
-  ## VPFA Configuration Hook scripts
-  OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-
-  ## Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
-  OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-
-  ## Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
-  #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+  ## VTS Update/install and per node VTF configuration scripts Enable/disable or wrap further as dictated by the scope of the deployment.
+  OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_rh_reg_wrapper.yaml
 
   ## Rsyslog client
   OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
@@ -272,34 +266,7 @@ parameter_defaults:
   ## Monit check interval
   # MonitCheckInterval: 30
 
-  ## Monit Check config applied on nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
-  ## LEGACY sbitio module
-  MonitVpfaChecks: |
-    {
-    "vpp":
-      {
-      "type": "process",
-      "config":
-        {
-        "matching": "vpp",
-        "program_start": "/sbin/service vpp start",
-        "program_stop": "/sbin/service vpp stop"
-        }
-      },
-    "vpfa":
-      {
-      "type": "process",
-      "config":
-        {
-        "matching": "vpfa_restconf_server",
-        "program_start": "/sbin/service vpfa start",
-        "program_stop": "/sbin/service vpfa stop"
-        }
-      }
-    }
-
   ## Raw config added to nodes enabled with the OS::TripleO::Services::MonitVpfaAgent role.
-  ## Used in to add configuration not supported by the puppet module types.
   MonitVpfaRawConfig: |
       check network underlay interface vnet
       check process vpp with matching "/usr/bin/vpp"
@@ -307,12 +274,7 @@ parameter_defaults:
       check process vpfa with matching vpfa_restconf_server
             mode passive
 
-  ## Check config applied on nodes enabled with the OS::TripleO::Services::MonitAgent role.
-  MonitChecks: |
-    {
-    }
-
-  ## Used in to add configuration not supported by the puppet module types.
+  ## Raw config added to nodes enabled with the OS::TripleO::Services::MonitAgent role.
   MonitRawConfig: |
       ''
 
@@ -376,6 +338,18 @@ parameter_defaults:
         [
           "<Plugin write_log>",
           "Format JSON",
+          "</Plugin>"
+        ]
+      },
+      "logfile":
+      {
+        "content":
+        [
+          "<Plugin logfile>",
+          "LogLevel info",
+          "File \"/var/log/vts_metrics.log\"",
+          "Timestamp true",
+          "PrintSeverity true",
           "</Plugin>"
         ]
       },

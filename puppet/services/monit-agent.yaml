@@ -150,9 +150,6 @@ outputs:
         monit::httpd_pemfile: {get_param: MonitSSLPemFile}
         tripleo::monit::raw_config: {get_param: MonitRawConfig}
         monit::config_dir_purge: {get_param: MonitPurgeConfig}
-        ##LEGACY sbit-io. TO BE REMOVED
-        tripleo::monit::allow: {get_param: MonitAllow}
-        monit::checks: {get_param: MonitChecks}
         #monit::eventqueue: {get_param: MonitEventqueue}
         #monit::system_check_ensure: {get_param: MonitSystemCheck}
         tripleo.monit_agent.firewall_rules:

@@ -35,7 +35,7 @@ DPDK_MAP = '/var/lib/os-net-config/dpdk_mapping.yaml'
 UNDERLAY_IF_FILE = '/etc/vpe/vpfa/underlay_mac'
 HIERA_DATA = '/etc/puppet/hieradata/${node_id}.json'
 HIERA_SERVICE_CONFIG = '/etc/puppet/hieradata/service_configs.json'
-OS_NET_CONF = '/etc/os-net-config/element_config.json'
+OS_NET_CONF = '/etc/os-net-config/config.json'
 LLDP_CONF = '/etc/vpe/lldp/lldp.conf'
 
 dpdk_data = []

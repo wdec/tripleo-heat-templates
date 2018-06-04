@@ -26,7 +26,7 @@ parameters:
     description: List of new packages. Each has to be enclosed by double quotes.
     type: string
     default: '
-      "cisco-vts-puppet-neutron", "cisco-vts-puppet-tripleo",
+      "cisco-vts-puppet-tripleo",
       "monit", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
       "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
       "cisco-vts-os-util"
@@ -34,7 +34,7 @@ parameters:
   VTSUpgradeNewForgePackages:
     description: List of new packages from puppet forge. Each has to be enclosed by double quotes.
     type: string
-    default: '"echoes-monit --version 1.1.2", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
+    default: '"wdec-monit --version 1.1.2", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
   VTSyumRepos:
     description: Configuration of VTS package yum repos
     type: string
@@ -176,7 +176,7 @@ resources:
               exec {'Patch os-refresh-config':
               #TODO: wdec - remove for Queens
                 path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
-                command => 'sed -i.bak \'s/-v \^lo\$/-v -e \^lo\$ -e \^vnet\$/\' /usr/libexec/os-refresh-config/configure.d/20-os-net-config',
+                command => 'sed -i.bak \'s/-v \^lo\$/-v -e \^lo\$ -e \^vnet\$/\' /usr/libexec/os-refresh-config/configure.d/20-os-net-config; true',
               }
             }
 
