@@ -26,7 +26,7 @@ parameters:
     description: List of new packages. Each has to be enclosed by double quotes.
     type: string
     default: '
-      "cisco-vts-agent", "python-cisco-controller",
+      "cisco-vts-agent", "python-cisco-controller", "python-cisco-controller-agent-device-drivers",
       "cisco-vts-puppet-neutron", "cisco-vts-puppet-tripleo",
       "monit", "collectd", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
       "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
