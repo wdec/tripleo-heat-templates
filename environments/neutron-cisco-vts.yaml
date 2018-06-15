@@ -5,9 +5,6 @@
 
 resource_registry:
 
-  ## Current VTS version
-  VTSversion: "2.6.1"
-
   ## Base Neutron ML2 definitions for VTS
   OS::TripleO::Services::NeutronCorePluginVTS: /usr/share/openstack-tripleo-heat-templates/puppet/services/neutron-plugin-ml2-cisco-vts.yaml
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
@@ -28,14 +25,8 @@ resource_registry:
   ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
   OS::TripleO::Services::VTSAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/neutron-cisco-vts-agent.yaml
 
-  ## VPFA Configuration Hook scripts
-  OS::TripleO::ComputeExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-
-  ## Additional hook scripts for controller. Enable/disable as disctated by the scope of the deployment
-  OS::TripleO::ControllerExtraConfigPre: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
-
-  ## Same hook scripts as above for all nodes in one. Enable/disable as disctated by the scope of the deployment.
-  #OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_vpfa.yaml
+  ## VTS Module install and VPFA Extra Configuration Hook scripts
+  OS::TripleO::NodeExtraConfig: /usr/share/openstack-tripleo-heat-templates/puppet/extraconfig/pre_deploy/cisco_vts_rh_reg_wrapper.yaml
 
   ## Rsyslog client
   OS::TripleO::Services::RSyslogClient: /usr/share/openstack-tripleo-heat-templates/puppet/services/rsyslog-client.yaml
@@ -54,9 +45,6 @@ resource_registry:
   ## Collectd agent service
   OS::TripleO::Services::CollectDAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/collectd-agent.yaml
 
-  ## VTS Version Upgrade service
-  OS::TripleO::Services::VTSversionUpgrade: /usr/share/openstack-tripleo-heat-templates/puppet/services/cisco-vts-package-upgrader.yaml
-
 parameter_defaults:
 
   ###################
@@ -67,10 +55,7 @@ parameter_defaults:
   VTSPassword:
   VTSServer: ''
   VTSVMMID: ''
-
-  ## Install/Update VTS packages
-  #VTSUpdate: 'true'
-
+    
   ###################
   ### Neutron ML2 ###
   ###################
@@ -80,7 +65,7 @@ parameter_defaults:
   NeutronTypeDrivers: 'vxlan,vlan,flat'
   NeutronServicePlugins: 'cisco_vts_router,trunk'
 
-  ## DHCP Agent interface driver. Uncomment ONLY if/when deploying VPP on the controller node(s).
+  ## DHCP Agent interface driver. Uncomment if/when deploying VPP on the controller node(s).
   #NeutronInterfaceDriver: 'cisco_controller.drivers.agent.linux.interface.NamespaceDriver'
 
   ########################
@@ -150,6 +135,9 @@ parameter_defaults:
   ########################
   ### VTS Update Info  ###
   ########################
+
+  ## Install/Update VTS packages during overcloud deployment (requires working yum repo access)
+  #VTSUpdate: 'true'
 
   ## VTS Yum Repo settings
 #  VTSyumRepos: |
