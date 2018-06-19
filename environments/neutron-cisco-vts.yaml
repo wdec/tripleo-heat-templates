@@ -1,9 +1,9 @@
 ## A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
-# vts 2.6.1
+# vts 2.6.2
 
 # By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
-# Pike dockerized version
+# Queens dockerized version
 
 resource_registry:
 
@@ -251,7 +251,7 @@ parameter_defaults:
 
   ## General settings. Applied to all Monit Agents
   ## Credentials
-  MonitUser: ''
+  MonitUser: 'monit_user'
   MonitPassword:
   MonitSSLPemFile: '/etc/ssl/certs/monit.pem'
 
