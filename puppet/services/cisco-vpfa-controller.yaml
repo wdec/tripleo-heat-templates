@@ -128,14 +128,16 @@ outputs:
             vts::lldp_enable: {get_param: VTSLldpEnable}
             cisco_vpfa::enable_vpp_stats: {get_param: VppStats}
             cisco_vpfa::package_ensure: {get_param: VpfaPackageEnsure}
-            tripleo.cisco_vpfa.firewall_rules:
-              '255 cisco vpfa':
-                dport:
-                  - 21345
-                  - 55555
-                source: {get_param: VTSR_u_IpAddressList}
-                proto: tcp
-                action: accept
+            # VPFA Firewall Rule is created in the tripleo::cisco_vpfa module to handle the case of multiple ip addresses
+            # Sample rule is below
+            #tripleo.cisco_vpfa.firewall_rules:
+            #  '255 cisco vpfa':
+            #    dport:
+            #      - 21345
+            #      - 55555
+            #    source: {get_param: VTSR_u_IpAddressList}
+            #    proto: tcp
+            #    action: accept
 
       step_config: |
         include tripleo::profile::base::cisco_vpfa
