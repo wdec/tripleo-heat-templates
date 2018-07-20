@@ -14,9 +14,10 @@ parameter_defaults:
   ###################
 
   VTSUsername: 'admin'
-  #VTSPassword:
-  VTSServer: ''
-  VTSVMMID: ''
+  VTSPassword:
+  VTSServer:
+  VTSVMMID:
+  VTSSiteId:
 
   ###################
   ### Neutron ML2 ###
