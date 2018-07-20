@@ -27,6 +27,10 @@ parameters:
     description: Port of the VTS Server
     type: number
     default: 8888
+  VTSSiteId:
+    description: VTS Site Id of the controller
+    type: string
+    default: ''
   VTSTimeout:
     description: Timeout for VTS server
     type: number
@@ -184,6 +188,7 @@ outputs:
             neutron::agents::ml2::cisco_vts_agent::local_ip: {get_param: [ServiceNetMap, NeutronTenantNetwork]}
             vts::vts_ip: {get_param: VTSServer}
             vts::vts_port: {get_param: VTSPort}
+            vts::vts_siteid: {get_param: VTSSiteId}
             neutron::agents::ml2::cisco_vts_agent::vts_username: {get_param: VTSUsername}
             neutron::agents::ml2::cisco_vts_agent::vts_password: {get_param: VTSPassword}
             neutron::agents::ml2::cisco_vts_agent::vts_vmmid: {get_param: VTSVMMID}

@@ -1,15 +1,13 @@
-heat_template_version: 2016-04-08
+heat_template_version: queens
 
 description: >
-  VTS Controller Settings for Neutron ML2 Plugin.
+  VTS Controller Settings for the Cisco VTS Neutron ML2 Plugin.
 
 parameters:
   VTSUsername:
-    default: 'admin'
     description: The username for the VTS server.
     type: string
   VTSPassword:
-    default: 'admin'
     type: string
     description: The password for the VTS server.
     hidden: true
@@ -18,6 +16,10 @@ parameters:
     type: string
   VTSVMMID:
     description: VMM ID used on VTS
+    type: string
+    default: ''
+  VTSSiteId:
+    description: VTS Site Id of the controller
     type: string
     default: ''
   VTSPort:
@@ -33,24 +35,32 @@ parameters:
     type: number
     default: 1
 
-  NeutronInterfaceDriver:
-  # Newton fix - TODO Remove for Queens
-    description: Neutron DHCP interface driver (temporary)
+  ServiceData:
+    default: {}
+    description: Dictionary packing service data
+    type: json
+  ServiceNetMap:
+    default: {}
+    description: Mapping of service_name -> network name. Typically set
+                 via parameter_defaults in the resource registry.  This
+                 mapping overrides those in ServiceNetMapDefaults.
+    type: json
+  DefaultPasswords:
+    default: {}
+    type: json
+  RoleName:
+    default: ''
+    description: Role name on which the service is applied
     type: string
-    default: 'neutron.agent.linux.interface.OVSInterfaceDriver'
-
+  RoleParameters:
+    default: {}
+    description: Parameters specific to the role
+    type: json
   EndpointMap:
     default: {}
     description: >
       Mapping of service endpoint -> protocol. Typically set
       via parameter_defaults in the resource registry.
-    type: json
-  ServiceNetMap:
-    default: {}
-    description: >
-      Mapping of service_name -> network name. Typically set
-      via parameter_defaults in the resource registry.  This
-      mapping overrides those in ServiceNetMapDefaults.
     type: json
   DefaultPasswords:
     default: {}
@@ -61,9 +71,12 @@ resources:
   NeutronMl2Base:
     type: ./neutron-plugin-ml2.yaml
     properties:
+      ServiceData: {get_param: ServiceData}
       ServiceNetMap: {get_param: ServiceNetMap}
       DefaultPasswords: {get_param: DefaultPasswords}
       EndpointMap: {get_param: EndpointMap}
+      RoleName: {get_param: RoleName}
+      RoleParameters: {get_param: RoleParameters}
 
 outputs:
   role_data:
@@ -75,13 +88,12 @@ outputs:
           - get_attr: [NeutronMl2Base, role_data, config_settings]
           - vts::vts_ip: {get_param: VTSServer}
             vts::vts_port: {get_param: VTSPort}
+            vts::vts_siteid: {get_param: VTSSiteId}
             neutron::plugins::ml2::cisco::vts::vts_username: {get_param: VTSUsername}
             neutron::plugins::ml2::cisco::vts::vts_password: {get_param: VTSPassword}
             neutron::plugins::ml2::cisco::vts::vts_vmmid: {get_param: VTSVMMID}
             neutron::plugins::ml2::cisco::vts::vts_timeout: {get_param: VTSTimeout}
             neutron::plugins::ml2::cisco::vts::vts_max_concurrent_events: {get_param: VTSMaxConcurrentEvents}
-        # Newton fix - TODO Remove for Queens
-            neutron::agents::dhcp::interface_driver: {get_param: NeutronInterfaceDriver}
 
       step_config: |
         include ::tripleo::profile::base::neutron::plugins::ml2

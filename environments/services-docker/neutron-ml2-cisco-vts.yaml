@@ -3,7 +3,7 @@
 # By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
 resource_registry:
-  OS::TripleO::Services::NeutronCorePluginVTS: ../../docker/services/neutron-plugin-ml2-cisco-vts.yaml
+  OS::TripleO::Services::NeutronCorePluginVTS: ../../docker/services/neutron-plugin-ml2-cisco-vts-262.yaml
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
   ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA
@@ -15,17 +15,18 @@ parameter_defaults:
   ### Docker Cisco VTS Neutron images  ###
   ########################################
 
-  DockerNeutronApiImage: 'repo/binary-neutron-cisco-vts'
-  DockerNeutronConfigImage: 'repo/binary-neutron-cisco-vts'
+  DockerNeutronApiImage: 'repo/eutron-cisco-vts-ml2:latest'
+  DockerNeutronConfigImage: 'repo/neutron-cisco-vts-ml2:latest'
 
   ###################
   ### VTS General ###
   ###################
 
   VTSUsername: 'admin'
-  #VTSPassword:
-  VTSServer: ''
-  VTSVMMID: ''
+  VTSPassword:
+  VTSServer:
+  VTSVMMID:
+  VTSSiteId:
 
   ###################
   ### Neutron ML2 ###

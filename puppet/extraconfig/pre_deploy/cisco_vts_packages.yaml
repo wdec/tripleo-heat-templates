@@ -27,14 +27,18 @@ parameters:
     type: string
     default: '
       "cisco-vts-puppet-tripleo",
-      "monit", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
-      "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
-      "cisco-vts-os-util"
+      "lldpd", "vts-lldpd-configure"
       '
+   #      "cisco-vts-puppet-tripleo",
+   #      "monit", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
+   #      "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
+   #      "cisco-vts-os-util"
+   #      '
   VTSUpgradeNewForgePackages:
     description: List of new packages from puppet forge. Each has to be enclosed by double quotes.
     type: string
-    default: '"wdec-monit --version 1.1.2", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
+    default: ''
+    #'"wdec-monit --version 1.1.2", "puppetlabs-limits --version 0.1.0", "saz-rsyslog --version 5.0.0"'
   VTSyumRepos:
     description: Configuration of VTS package yum repos
     type: string
