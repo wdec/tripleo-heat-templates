@@ -26,10 +26,11 @@ parameters:
     description: List of new packages. Each has to be enclosed by double quotes.
     type: string
     default: '
-      "cisco-vts-puppet-tripleo",
+      "cisco-vts-puppet-tripleo", "cisco-vts-puppet-neutron",
       "lldpd", "vts-lldpd-configure"
       '
-   #      "cisco-vts-puppet-tripleo",
+   # Full set for VPFA:
+   #      "cisco-vts-puppet-tripleo", "cisco-vts-puppet-neutron",
    #      "monit", "cisco-vpfa-collectd-plugin", "cisco-vts-os-net-config",
    #      "vpp", "vpp-plugins", "vpfa", "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-vpfa", "cisco-vts-puppet-fdio",
    #      "cisco-vts-os-util"
