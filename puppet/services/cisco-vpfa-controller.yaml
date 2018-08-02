@@ -25,6 +25,10 @@ parameters:
     description: VTS Site Id of the controller
     type: string
     default: ''
+  VTSVMMID:
+    description: VMM ID used on VTS
+    type: string
+    default: ''
   VTSNetworkIPv4Gateway:
     type: string
     default: ''
@@ -122,6 +126,7 @@ outputs:
             cisco_vpfa::vpfa_hostname: {get_param: VPFAHostname}
             cisco_vpfa::vts_username: {get_param: VTSUsername}
             cisco_vpfa::vts_password: {get_param: VTSPassword}
+            cisco_vpfa::vmmid: {get_param: VTSVMMID}
             cisco_vpfa::vif_type: {get_param: VifTypeController}
             cisco_vpfa::network_config_method: {get_param: NetworkConfigMethod}
             cisco_vpfa::network_nameserver: {get_param: NetworkNameServerIP}
