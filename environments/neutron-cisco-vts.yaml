@@ -17,12 +17,12 @@ resource_registry:
 
   ## OVS and VTS Agent sub-section ##
 
-  ## Disable/enable the default OVS Agent for compute and controller
+  ## Disable the default OVS Agent for compute and controller.
   OS::TripleO::Services::ComputeNeutronOvsAgent: OS::Heat::None
   OS::TripleO::Services::NeutronOvsAgent: OS::Heat::None
 
-  ## Disable/enable VTS agent service. VTS agent and OVS agent are mutually exclusive
-  ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file
+  ## Define VTS agent service. VTS agent and OVS agent are mutually exclusive
+  ## NOTE: The OS::TripleO::Services::VTSAgent needs to be added to the deployment role file to enable
   OS::TripleO::Services::VTSAgent: /usr/share/openstack-tripleo-heat-templates/puppet/services/neutron-cisco-vts-agent.yaml
 
   ## Package install and VPFA Configuration Hook scripts with RH registration wrapper
@@ -155,9 +155,9 @@ parameter_defaults:
     gpgcheck = 0
     metadata_expire = 86400
 
-    [cisco2.6.2.vts262-os-pike]
-    name=cisco2.6.2.vts261-os-pike
-    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-pike
+    [cisco2.6.2.vts262-os-newton]
+    name=cisco2.6.2.vts261-os-newton
+    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-newton
     username=
     password=
     enabled = 1
