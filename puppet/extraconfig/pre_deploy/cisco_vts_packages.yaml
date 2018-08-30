@@ -156,6 +156,22 @@ resources:
                 }
               }
 
+              if "vts-lldpd-configure" in [YUMPACKAGES] {
+              # Remove once lldpd-configure script is fixed
+              # Note: 'true' at exit ensures script always succeeds
+                exec {'Patch vts-lldp-config':
+                  path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
+                  command => 'sed -i.bak \'s:/etc/nova/nova.conf:/var/lib/config-data/puppet-generated/nova_libvirt/etc/nova/nova.conf:\' /etc/rc.d/vts-lldpd-configure/vts-lldpd-configure; true',
+                  notify => Service['cisco-lldp-cfg'],
+                }
+
+                service {'cisco-lldp-cfg':
+                  ensure => running,
+                  enable => true,
+                  hasstatus => false,
+                }
+              }
+
               if "cisco-vts-agent" in [YUMPACKAGES] {
                 service {'neutron-vts-agent':
                   enable => false,
@@ -176,12 +192,6 @@ resources:
                   ensure => running,
                   hasstatus => false,
                 }
-              }
-
-              exec {'Patch os-refresh-config':
-              #TODO: wdec - remove for Queens
-                path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
-                command => 'sed -i.bak \'s/-v \^lo\$/-v -e \^lo\$ -e \^vnet\$/\' /usr/libexec/os-refresh-config/configure.d/20-os-net-config; true',
               }
             }
 
