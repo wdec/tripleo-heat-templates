@@ -158,10 +158,12 @@ resources:
 
               if "vts-lldpd-configure" in [YUMPACKAGES] {
               # Remove once lldpd-configure script is fixed
+                $cmd1 = 'sed -i.bak \'s:"/etc/nova/nova.conf:"/var/lib/config-data/puppet-generated/nova_libvirt/etc/nova/nova.conf:\' /etc/rc.d/vts-lldpd-configure/vts-lldpd-configure'
+                $cmd2 = 'sed -i.bak \'s:pci_passthrough_whitelist:passthrough_whitelist:\' /etc/rc.d/vts-lldpd-configure/vts-lldpd-configure'
               # Note: 'true' at exit ensures script always succeeds
                 exec {'Patch vts-lldp-config':
                   path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
-                  command => 'sed -i.bak \'s:"/etc/nova/nova.conf:"/var/lib/config-data/puppet-generated/nova_libvirt/etc/nova/nova.conf:\' /etc/rc.d/vts-lldpd-configure/vts-lldpd-configure; true',
+                  command => "${cmd1};${cmd2};true",
                   notify => Service['cisco-lldp-cfg'],
                 }
 
