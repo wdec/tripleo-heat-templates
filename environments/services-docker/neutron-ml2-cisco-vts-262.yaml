@@ -1,0 +1,67 @@
+# A docker enabled Heat environment file which can be used to enable Cisco VTS , configured via puppet
+
+# By default the configuration has items required to deploy the cisco ML2 VTS driver + LLDP on all nodes
+
+resource_registry:
+  OS::TripleO::Services::NeutronCorePluginVTS: ../../docker/services/neutron-plugin-ml2-cisco-vts-262.yaml
+  OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+  OS::TripleO::Services::ComputeNeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
+
+parameter_defaults:
+
+  ########################################
+  ### Docker Cisco VTS Neutron images  ###
+  ########################################
+
+  DockerNeutronApiImage: 'repo/neutron-cisco-vts-ml2:latest'
+  DockerNeutronConfigImage: 'repo/neutron-cisco-vts-ml2:latest'
+
+  ###################
+  ### VTS General ###
+  ###################
+
+  VTSUsername: 'admin'
+  VTSPassword:
+  VTSServer:
+  VTSVMMID:
+  VTSSiteId:
+
+  ###################
+  ### Neutron ML2 ###
+  ###################
+
+  NeutronCorePlugin: 'neutron.plugins.ml2.plugin.Ml2Plugin'
+  NeutronMechanismDrivers: 'sriovnicswitch,cisco_vts'
+  NeutronTypeDrivers: 'vxlan,vlan,flat'
+  NeutronServicePlugins: 'cisco_vts_router,trunk'
+
+  ############################
+  ### Install VTS packages ###
+  ############################
+
+  VTSUpdate: 'true'
+  VTSyumRepos: |
+    [cisco2.6.2.vts262]
+    name=cisco2.6.2.vts262
+    baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262
+    username=<user>
+    password=<pass>
+    enabled = 1
+    gpgcheck = 0
+    metadata_expire = 86400
+    proxy =
+
+    [cisco2.6.2.vts262-os-queens]
+    name=cisco2.6.2.vts262-os-queens
+    baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-queens
+    username=<user>
+    password=<pass>
+    enabled = 1
+    gpgcheck = 0
+    metadata_expire = 86400
+    proxy =
+
+  VTSUpgradeNewPackages: '
+      "cisco-vts-puppet-tripleo",
+      "lldpd", "vts-lldpd-configure", "cisco-vts-puppet-neutron"
+      '

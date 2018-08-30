@@ -161,7 +161,7 @@ resources:
               # Note: 'true' at exit ensures script always succeeds
                 exec {'Patch vts-lldp-config':
                   path    => [ '/usr/sbin', '/sbin', '/usr/bin', '/bin' ],
-                  command => 'sed -i.bak \'s:/etc/nova/nova.conf:/var/lib/config-data/puppet-generated/nova_libvirt/etc/nova/nova.conf:\' /etc/rc.d/vts-lldpd-configure/vts-lldpd-configure; true',
+                  command => 'sed -i.bak \'s:"/etc/nova/nova.conf:"/var/lib/config-data/puppet-generated/nova_libvirt/etc/nova/nova.conf:\' /etc/rc.d/vts-lldpd-configure/vts-lldpd-configure; true',
                   notify => Service['cisco-lldp-cfg'],
                 }
 
