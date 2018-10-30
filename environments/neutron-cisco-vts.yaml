@@ -1,5 +1,5 @@
 ## A Heat environment file which can be used to enable Cisco VTS extensions, configured via puppet
-# vts 2.6.2
+# vts 3.0.0
 
 # By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
@@ -53,7 +53,7 @@ resource_registry:
 parameter_defaults:
 
   ## Current VTS version
-  VTSversion: "2.6.2"
+  VTSversion: "3.0.0"
 
   ###################
   ### VTS General ###

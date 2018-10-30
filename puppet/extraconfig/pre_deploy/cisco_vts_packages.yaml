@@ -12,11 +12,11 @@ parameters:
   VTSversion:
     description: Current VTS version
     type: string
-    default: '2.6.2'
+    default: '3.0.0'
   VTS_previous_version:
     description: Previous VTS version. Used in upgrade logic
     type: string
-    default: '2.6.0'
+    default: '2.6.2.1'
   VTSUpdate:
     description: VTS Package install/update. Valid values 'false' or 'true'
     #Needs to be a string as the value is passed as a parameter to puppet
