@@ -3,7 +3,7 @@
 # By default the configuration has items required to deploy VPP/VPFA on all nodes + the cisco ML2 VTS driver
 
 resource_registry:
-  OS::TripleO::Services::NeutronCorePluginVTS: ../../docker/services/neutron-plugin-ml2-cisco-vts-262.yaml
+  OS::TripleO::Services::NeutronCorePluginVTS: ../../docker/services/neutron-plugin-ml2-cisco-vts-263.yaml
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
   ## Comment out below line when deploying VTS Agent on compute nodes instead of VPP/VPFA

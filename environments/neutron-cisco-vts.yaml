@@ -8,7 +8,7 @@
 resource_registry:
 
   ## Base Neutron ML2 definitions for VTS
-  OS::TripleO::Services::NeutronCorePluginVTS: /usr/share/openstack-tripleo-heat-templates/docker/services/neutron-plugin-ml2-cisco-vts-262.yaml
+  OS::TripleO::Services::NeutronCorePluginVTS: /usr/share/openstack-tripleo-heat-templates/docker/services/neutron-plugin-ml2-cisco-vts-263.yaml
   OS::TripleO::Services::NeutronCorePlugin: OS::TripleO::Services::NeutronCorePluginVTS
 
   #DockerNeutronApiImage: 'kolla/centos-binary-neutron-cisco-vts'
@@ -149,18 +149,18 @@ parameter_defaults:
 
   ## VTS Yum Repo settings
 #  VTSyumRepos: |
-#    [cisco2.6.2.vts262]
-#    name=cisco2.6.2.vts262
-#    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262
+#    [cisco2.6.3.vts263]
+#    name=cisco2.6.3.vts263
+#    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.3.vts263
 #    username=
 #    password=
 #    enabled = 1
 #    gpgcheck = 0
 #    metadata_expire = 86400
 #
-#    [cisco2.6.2.vts262-os-queens]
-#    name=cisco2.6.2.vts261-os-queens
-#    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-queens
+#    [cisco2.6.3.vts263-os-queens]
+#    name=cisco2.6.3.vts261-os-queens
+#    baseurl=http://devhub.cisco.com/artifactory/vts-yum-dev/2.6.3.vts263-os-queens
 #    username=
 #    password=
 #    enabled = 1

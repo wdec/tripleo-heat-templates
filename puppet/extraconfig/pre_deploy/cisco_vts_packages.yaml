@@ -12,7 +12,7 @@ parameters:
   VTSversion:
     description: Current VTS version
     type: string
-    default: '3.0.0'
+    default: '2.6.3'
   VTS_previous_version:
     description: Previous VTS version. Used in upgrade logic
     type: string
@@ -44,9 +44,9 @@ parameters:
     description: Configuration of VTS package yum repos
     type: string
     default: |
-      [cisco2.6.2.vts262]
-      name=cisco2.6.2.vts262
-      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262
+      [cisco2.6.3.vts263]
+      name=cisco2.6.3.vts263
+      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.3.vts263
       username=
       password=
       enabled = 1
@@ -54,9 +54,9 @@ parameters:
       metadata_expire = 86400
       proxy =
 
-      [cisco2.6.2.vts262-os-queens]
+      [cisco2.6.3.vts263-os-queens]
       name=cisco2.6.1.vts261-os-queens
-      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.2.vts262-os-queens
+      baseurl=https://devhub.cisco.com/artifactory/vts-yum-dev/2.6.3.vts263-os-queens
       username=
       password=
       enabled = 1
