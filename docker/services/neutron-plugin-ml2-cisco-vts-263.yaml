@@ -39,7 +39,7 @@ parameters:
 resources:
 
   NeutronMl2VtsBase:
-    type: ../../puppet/services/neutron-plugin-ml2-cisco-vts-262.yaml
+    type: ../../puppet/services/neutron-plugin-ml2-cisco-vts-263.yaml
     properties:
       EndpointMap: {get_param: EndpointMap}
       ServiceData: {get_param: ServiceData}
